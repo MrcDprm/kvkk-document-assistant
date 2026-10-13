@@ -364,3 +364,28 @@ def test_question_is_masked_with_the_model_too():
 def test_head_requests_are_answered(client):
     assert client.head("/").status_code == 200
     assert client.head("/healthz").status_code == 200
+
+
+# --- Final scan fixes ---
+
+def test_forged_forwarded_for_does_not_bypass_the_rate_limit(client):
+    client.app.state.limiter._limits["analyze"] = (2, 60)
+    codes = [
+        client.post("/analyze", data={"mode": "demo"}, headers={"x-forwarded-for": f"10.0.0.{i}"},
+                    follow_redirects=False).status_code
+        for i in range(3)
+    ]
+    assert codes == [303, 303, 429]
+
+
+def test_cloudflare_client_ip_is_used(client):
+    client.app.state.limiter._limits["analyze"] = (1, 60)
+    first = client.post("/analyze", data={"mode": "demo"}, headers={"cf-connecting-ip": "1.1.1.1"}, follow_redirects=False)
+    other = client.post("/analyze", data={"mode": "demo"}, headers={"cf-connecting-ip": "2.2.2.2"}, follow_redirects=False)
+    again = client.post("/analyze", data={"mode": "demo"}, headers={"cf-connecting-ip": "1.1.1.1"}, follow_redirects=False)
+    assert (first.status_code, other.status_code, again.status_code) == (303, 303, 429)
+
+
+def test_session_cookie_has_no_fixed_lifetime(client):
+    cookie = analyze_text(client).headers["set-cookie"].lower()
+    assert "max-age" not in cookie and "expires" not in cookie

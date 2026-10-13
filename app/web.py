@@ -34,6 +34,16 @@ def render(request: Request, name: str, status_code: int = 200, **context) -> Re
 
 
 def client_ip(request: Request) -> str:
+    """The visitor's IP for rate limiting.
+
+    On Render the site sits behind Cloudflare, which sets CF-Connecting-IP itself (a visitor
+    cannot change it). X-Forwarded-For is NOT used: Render keeps whatever the visitor sent
+    there and only appends to it, so its first entry can be forged. Without the Cloudflare
+    header (local runs) the direct peer address is used.
+    """
+    cf = request.headers.get("cf-connecting-ip", "").strip()
+    if cf:
+        return cf
     return request.client.host if request.client else "unknown"
 
 
@@ -96,7 +106,8 @@ async def analyze(request: Request) -> Response:
         httponly=True,  # JavaScript cannot read the session id
         secure=settings.cookie_secure,
         samesite="lax",  # not sent on cross-site POSTs (CSRF)
-        max_age=settings.session_ttl_seconds,
+        # No max_age: the server extends a session on every use and expires it after 30 idle
+        # minutes. A fixed cookie lifetime would log out a visitor who is still working.
     )
     return response
 

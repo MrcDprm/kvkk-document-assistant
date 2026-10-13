@@ -26,6 +26,7 @@ RUN useradd --create-home --uid 10001 appuser
 USER appuser
 
 EXPOSE 10000
-# Render passes the port in $PORT. --proxy-headers makes request.client.host the visitor's IP
-# behind Render's proxy (used by the rate limiter); only that proxy can reach the container.
+# Render passes the port in $PORT. --proxy-headers is needed for https links (X-Forwarded-Proto).
+# The rate limiter does not use the forwarded client address: the first X-Forwarded-For entry
+# can be forged on Render, so it reads Cloudflare's CF-Connecting-IP (see client_ip in app/web.py).
 CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-10000} --proxy-headers --forwarded-allow-ips='*' --no-server-header"]
