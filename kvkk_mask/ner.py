@@ -16,7 +16,7 @@ _WORD = re.compile(r"\w+(?:[.]\w+)*|[^\w\s]")
 MAX_WORDS = 100  # per window; training sentences were short, so long texts are cut at sentence ends
 BATCH = 16
 # The model sometimes takes the word next to a name into the name ("Ayşe Kaya Hanım", "Ben Ayşe").
-_EDGE_WORDS = {"ben", "biz", "sen", "siz", "o", "bu", "şu"}
+_EDGE_WORDS = {"ben", "bana", "beni", "benim", "biz", "bize", "sen", "sana", "siz", "size", "o", "ona", "onu", "bu", "şu"}
 
 
 def split_words(text: str) -> list[tuple[str, int, int]]:
@@ -32,14 +32,14 @@ class Span:
 
 
 class NerModel:
-    def __init__(self, model_dir: str | Path, threads: int = 2) -> None:
+    def __init__(self, model_dir: str | Path, threads: int = 2, model_file: str = "model.onnx") -> None:
         import onnxruntime as ort
         from tokenizers import Tokenizer
 
         model_dir = Path(model_dir)
         options = ort.SessionOptions()
         options.intra_op_num_threads = threads
-        self._session = ort.InferenceSession(str(model_dir / "model.onnx"), options, providers=["CPUExecutionProvider"])
+        self._session = ort.InferenceSession(str(model_dir / model_file), options, providers=["CPUExecutionProvider"])
         self._tokenizer = Tokenizer.from_file(str(model_dir / "tokenizer.json"))
         self._tokenizer.no_padding()
         self._tokenizer.enable_truncation(512)

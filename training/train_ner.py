@@ -8,7 +8,8 @@ speed / accuracy trade-off is measured instead of assumed.
 
 Data: WikiANN Turkish (Wikipedia sentences) + synthetic document/question sentences
 (training/synth.py). The output folder holds everything the app needs at runtime:
-model.onnx (int8), tokenizer.json, labels.json, and metrics.json for the README.
+model.onnx (full precision), model-int8.onnx, tokenizer.json, labels.json, preprocess.json
+and metrics.json for the README.
 """
 
 import argparse
@@ -181,7 +182,8 @@ def train(out: Path, base: str, epochs: int, batch_size: int, seed: int) -> None
         "train_sentences": len(train_rows),
         "training_seconds": round(time.time() - started),
         "pytorch": scores,
-        "onnx_int8": {name: evaluate_onnx(out, tokenizer, rows, lowercase) for name, rows in dev_sets.items()},
+        "onnx_fp32": {name: evaluate_onnx(out / "model.onnx", tokenizer, rows, lowercase) for name, rows in dev_sets.items()},
+        "onnx_int8": {name: evaluate_onnx(out / "model-int8.onnx", tokenizer, rows, lowercase) for name, rows in dev_sets.items()},
     }
     (out / "metrics.json").write_text(json.dumps(metrics, indent=2), encoding="utf-8")
     print(json.dumps(metrics, indent=2))
@@ -209,7 +211,7 @@ def export_onnx(model, tokenizer, out: Path, lowercase: bool) -> None:
     from onnxruntime.quantization import QuantType, quantize_dynamic
 
     sample = tokenizer(prepare(["Ayşe", "Yılmaz", "aradı"], lowercase), is_split_into_words=True, return_tensors="pt")
-    fp32 = out / "model-fp32.onnx"
+    fp32 = out / "model.onnx"
     torch.onnx.export(
         model,
         (sample["input_ids"], sample["attention_mask"]),
@@ -220,22 +222,20 @@ def export_onnx(model, tokenizer, out: Path, lowercase: bool) -> None:
         opset_version=17,
         dynamo=False,
     )
-    # int8 weights: about 4x smaller and faster on CPU, with a small accuracy cost (measured below).
-    quantize_dynamic(str(fp32), str(out / "model.onnx"), weight_type=QuantType.QInt8)
-    fp32.unlink()
-    for name in ("model-fp32.onnx.data",):
-        (out / name).unlink(missing_ok=True)
+    # int8 weights: about 4x smaller and faster on CPU. Small models lose more accuracy than large
+    # ones, so both files are kept and measured; per-channel scales lose less than one scale per tensor.
+    quantize_dynamic(str(fp32), str(out / "model-int8.onnx"), weight_type=QuantType.QInt8, per_channel=True)
 
     tokenizer.backend_tokenizer.save(str(out / "tokenizer.json"))
     (out / "labels.json").write_text(json.dumps(LABELS), encoding="utf-8")
     (out / "preprocess.json").write_text(json.dumps({"lowercase": lowercase}), encoding="utf-8")
 
 
-def evaluate_onnx(out: Path, tokenizer, rows, lowercase: bool) -> dict:
+def evaluate_onnx(model_file: Path, tokenizer, rows, lowercase: bool) -> dict:
     import numpy as np
     import onnxruntime as ort
 
-    session = ort.InferenceSession(str(out / "model.onnx"), providers=["CPUExecutionProvider"])
+    session = ort.InferenceSession(str(model_file), providers=["CPUExecutionProvider"])
     gold, predicted = [], []
     for tokens, tags in rows:
         enc = tokenizer(prepare(tokens, lowercase), is_split_into_words=True, truncation=True, max_length=MAX_LENGTH, return_tensors="np")
