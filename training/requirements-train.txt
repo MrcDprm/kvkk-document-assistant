@@ -1,0 +1,4 @@
+# Installed in Google Colab on top of its preinstalled torch and transformers.
+datasets==5.1.0
+onnx==1.23.2
+onnxruntime==1.31.0
