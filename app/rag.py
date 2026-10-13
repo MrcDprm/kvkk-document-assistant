@@ -12,6 +12,9 @@ Every request that leaves the server is written to the session's audit log, exac
 import math
 import re
 import time
+from array import array
+
+from starlette.concurrency import run_in_threadpool
 
 from app.llm import LLM
 from app.store import AuditEntry, Session
@@ -91,12 +94,14 @@ def chunk_text(text: str, size: int = CHUNK_SIZE, overlap: int = CHUNK_OVERLAP) 
     return chunks
 
 
-def _normalize(vector: list[float]) -> list[float]:
+def _normalize(vector) -> array:
+    """Unit length, stored as 4-byte floats: a Python list of floats takes ~8x more memory,
+    which matters with up to 200 sessions on a 512 MB server."""
     length = math.sqrt(sum(x * x for x in vector)) or 1.0
-    return [x / length for x in vector]
+    return array("f", (x / length for x in vector))
 
 
-def top_k(query: list[float], vectors: list[list[float]], k: int) -> list[int]:
+def top_k(query, vectors, k: int) -> list[int]:
     """Indexes of the k most similar vectors (cosine similarity), in document order."""
     q = _normalize(query)
     scores = [sum(a * b for a, b in zip(q, v)) for v in vectors]
@@ -121,7 +126,7 @@ async def _ensure_index(session: Session, llm: LLM) -> None:
     if session.index is not None and session.index_key == key:
         return
     chunks = chunk_text(masked_document(session))
-    vectors: list[list[float]] | None = None
+    vectors: list[array] | None = None
     if len(chunks) > TOP_K:
         started = time.perf_counter()
         vectors = [_normalize(v) for v in await llm.embed(chunks, "RETRIEVAL_DOCUMENT")]
@@ -156,7 +161,7 @@ async def ask(session: Session, question: str, llm: LLM, lang: str, ner=None) ->
 
     async with session.lock:  # two questions at once must not build the index twice
         p = session.pseudonymizer
-        found = detect(question, known=session.entities, ner=ner)
+        found = await run_in_threadpool(detect, question, session.entities, ner)
         masked_question = p.mask(question, _active_entities(session, found)).text
         await _ensure_index(session, llm)
         chunks, vectors = session.index

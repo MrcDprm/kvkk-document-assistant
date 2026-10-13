@@ -163,3 +163,12 @@ def test_rare_name_in_lowercase_question_is_masked():
     sent = llm.sent_texts().lower()
     assert "ümmühan" not in sent and "çelik" not in sent
     assert "[KISI_1] in telefon numarası ne" in llm.sent_texts()
+
+
+def test_vectors_are_stored_compactly():
+    from array import array
+    text = "\n\n".join(d.text for d in make_documents(12, seed=5))
+    session = make_session(text)
+    run(ask(session, "Kira?", FakeLLM(), "tr"))
+    _, vectors = session.index
+    assert all(isinstance(v, array) and v.typecode == "f" for v in vectors)

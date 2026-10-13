@@ -40,7 +40,7 @@ class Session:
     pseudonymizer: Pseudonymizer = field(default_factory=Pseudonymizer)
     audit: list[AuditEntry] = field(default_factory=list)
     questions: int = 0
-    index: tuple[list[str], list[list[float]] | None] | None = None  # (masked chunks, vectors)
+    index: tuple[list[str], list | None] | None = None  # (masked chunks, unit vectors as array("f"))
     index_key: frozenset[str] | None = None  # the exclusions the index was built with
     lock: asyncio.Lock = field(default_factory=asyncio.Lock)
 
