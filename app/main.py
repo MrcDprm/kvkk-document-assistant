@@ -144,7 +144,7 @@ def create_app(settings: Settings | None = None, llm: LLM | None = None, ner=Non
         # This handler runs outside the middleware above, so the headers are added here too.
         return JSONResponse({"error": "internal_error"}, status_code=500, headers=SECURITY_HEADERS)
 
-    @app.get("/healthz")
+    @app.api_route("/healthz", methods=["GET", "HEAD"])
     def healthz() -> dict:
         return {"status": "ok"}
 

@@ -43,7 +43,8 @@ def current_session(request: Request) -> Session | None:
 
 # --- Pages ---
 
-@router.get("/")
+# HEAD too: link previews and uptime checks often use it.
+@router.api_route("/", methods=["GET", "HEAD"])
 def home(request: Request, error: str = "") -> Response:
     # Only known error codes are shown; anything else in the URL is ignored.
     known = f"error.{error}" in TEXTS["tr"]

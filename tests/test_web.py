@@ -359,3 +359,8 @@ def test_question_is_masked_with_the_model_too():
     analyze_text(client)
     client.post("/api/ask", json={"question": "Cebrail Tuzcuoğlu kim?"})
     assert "Cebrail" not in llm.sent_texts()
+
+
+def test_head_requests_are_answered(client):
+    assert client.head("/").status_code == 200
+    assert client.head("/healthz").status_code == 200
