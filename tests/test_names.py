@@ -78,3 +78,15 @@ def test_detect_combines_names_and_numbers():
         (EntityType.TCKN, "10000000146"),
         (EntityType.TELEFON, "0532 123 45 67"),
     ]
+
+
+def test_tr_capitalize():
+    from kvkk_mask.names import tr_capitalize
+    assert tr_capitalize("irem") == "İrem"
+    assert tr_capitalize("ılgaz") == "Ilgaz"
+    assert tr_capitalize("ÖMER") == "Ömer"
+
+
+def test_addressee_words_are_not_names():
+    assert names("Sayın Yetkili,") == []
+    assert names("Sayın İlgili,") == []

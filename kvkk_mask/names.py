@@ -33,13 +33,21 @@ def tr_lower(word: str) -> str:
     return word.replace("I", "ı").replace("İ", "i").lower()
 
 
+def tr_capitalize(word: str) -> str:
+    """First letter upper with Turkish rules: "irem" -> "İrem" (str.capitalize gives "Irem")."""
+    if not word:
+        return word
+    first = {"i": "İ", "ı": "I"}.get(word[0], word[0].upper())
+    return first + tr_lower(word[1:])
+
+
 def _load_words(filename: str) -> frozenset[str]:
     lines = (_DATA / filename).read_text(encoding="utf-8").splitlines()
     return frozenset(line.strip() for line in lines if line.strip() and not line.startswith("#"))
 
 
 @lru_cache(maxsize=1)
-def _first_names() -> frozenset[str]:
+def first_names() -> frozenset[str]:
     return _load_words("first_names_tr.txt")
 
 
@@ -60,7 +68,7 @@ def _runs(text: str) -> list[list[re.Match]]:
 
 
 def find_names(text: str) -> list[Entity]:
-    first_names = _first_names()
+    known_first_names = first_names()
     stop = _non_name_words()
     entities: list[Entity] = []
 
@@ -73,7 +81,7 @@ def find_names(text: str) -> list[Entity]:
                 continue
 
             titled = bool(_TITLE_BEFORE.search(text[max(0, run[i].start() - 20):run[i].start()]))
-            if words[i] not in first_names and not titled:
+            if words[i] not in known_first_names and not titled:
                 i += 1
                 continue
 
@@ -83,7 +91,7 @@ def find_names(text: str) -> list[Entity]:
             while j + 1 < len(run) and words[j + 1] not in stop and j - i + 1 < _MAX_NAME_WORDS:
                 if text[run[j].end():run[j].end() + 1] in ("'", "’"):
                     break  # "Yılmaz'ın": the suffix closes the name
-                if words[j] in first_names or (titled and j - i + 1 < _MAX_TITLED_WORDS):
+                if words[j] in known_first_names or (titled and j - i + 1 < _MAX_TITLED_WORDS):
                     j += 1
                 else:
                     break
