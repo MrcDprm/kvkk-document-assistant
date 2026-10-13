@@ -1,0 +1,65 @@
+# Hand-written hard cases. Cases are separated by a blank line.
+# Personal data is marked as [[TYPE:value]]; everything else must NOT be detected.
+# Some cases are expected to fail; they show the limits of the rule-based approach.
+
+Sayın [[KISI:Zümrüt Karaosmanoğlu]], başvurunuz alınmıştır.
+
+[[KISI:Ahmet Yılmaz]]'ın [[TELEFON:0 (532) 111 22 33]] numarası kapalı.
+
+Müşteri [[KISI:GÜLSÜM ÖZDEMİR]] (TCKN: [[TCKN:10000000146]]) iade istedi.
+
+Dün [[KISI:Ahmet]] aradı, yarın tekrar arayacak.
+
+[[KISI:Tayyar Gündoğdu]] sözleşmeyi imzaladı.
+
+Fatura no: 2026000118734, sipariş tarihi 14.10.2026, tutar 1.249,90 TL, saat 14:30.
+
+Hesap: [[IBAN:tr33 0006 1005 1978 6457 8413 26]] (Garanti Bankası Levent Şubesi)
+
+Bana [[TELEFON:+905321234567]] ya da [[TELEFON:(0212) 555 12 34]] numarasından ulaşın.
+
+Vergi Kimlik Numarası: [[VKN:4540536920]], Kadıköy Vergi Dairesi.
+
+E-posta: [[EPOSTA:AYSE.KAYA@ORNEK.COM.TR]]
+
+Aracın plakası [[PLAKA:34ABC123]], ruhsat sahibi [[KISI:Necdet Karabulut]].
+
+Kart: [[KART:4111-1111-1111-1111]], son kullanma 12/28, CVV yazılmadı.
+
+Adres: Umut Mahallesi, Barış Caddesi No: 12 D: 5, Kadıköy/İstanbul 34710
+
+Deniz Yatırım A.Ş. ile Can Holding arasında 01.01.2026 tarihli sözleşme imzalandı.
+
+Dr. [[KISI:Selim Aksoy]] ve hemşire [[KISI:Melek Uçar]] nöbetteydi.
+
+Umut Verici Gelişmeler başlıklı rapor ektedir.
+
+Toplantıya [[KISI:Ayşe Nur Demir]] ve [[KISI:Elif Kaya Demir]] katıldı.
+
+[[KISI:İREM ŞAHİN]] adına düzenlenen poliçe.
+
+Sn. [[KISI:Ümmühan Kocabaş]]'a tebligat yapıldı.
+
+Ekim ayında [[KISI:Nisan Yıldız]] ile görüştük; 15 Nisan 2026'da ödeme yapılacak.
+
+Güneş Enerjisi Santrali projesi için teklif istendi.
+
+[[KISI:Zeynep]] Hanım'ın talebi üzerine [[KISI:Mehmet Öztürk]] Bey'e dosya iletildi.
+
+Adı Soyadı: [[KISI:Rasim Tunç]]
+T.C. Kimlik No: [[TCKN:52834069142]]
+Cep: [[TELEFON:0545 678 90 12]]
+
+ISBN 978-605-09-1234-5 numaralı kitap, posta kodu 06100, sicil no 4471.
+
+Referans: 5321234567 numaralı kargo yolda.
+
+[[KISI:Mustafa Kemal Arslan]] ile [[KISI:Ali Rıza Polat]] ortak.
+
+Bilgi için [[EPOSTA:destek@firma.com.tr]] adresine yazınız, [[KISI:Hande Yücel]] cevaplayacak.
+
+Kefil [[KISI:Ferhat Işık]], [[PLAKA:06 A 1234]] plakalı araç ile geldi.
+
+Kartınızın son 4 hanesi 1111, işlem tutarı 4.500,00 TL.
+
+İHTARNAME — Keşideci: [[KISI:Feyyaz Bozkurt]], Muhatap: [[KISI:Sevgi Altun]]
