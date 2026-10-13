@@ -17,6 +17,14 @@ doç
 uzm
 öğr
 gör
+yetkili
+yetkilisi
+ilgili
+müdür
+müdürü
+başkan
+firma
+makamına
 
 # Institutions and addresses
 a.ş
