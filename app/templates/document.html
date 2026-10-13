@@ -37,6 +37,27 @@
     </article>
   </div>
 
+  <section class="sheet ask" aria-labelledby="ask-title">
+    <h2 class="sheet__title" id="ask-title">{{ t('ask.title') }}</h2>
+    {% if ask_enabled %}
+    <p class="hint">{{ t('ask.hint') }}</p>
+    <ol class="qa" data-qa aria-live="polite"></ol>
+    <form class="ask__form" data-ask>
+      <label class="visually-hidden" for="question">{{ t('ask.label') }}</label>
+      <textarea id="question" name="question" rows="2" maxlength="500" required placeholder="{{ t('ask.placeholder') }}"></textarea>
+      <button class="btn btn--primary" type="submit">{{ t('ask.submit') }}</button>
+    </form>
+    <div class="examples">
+      <span class="hint">{{ t('ask.examples') }}:</span>
+      {% for n in [1, 2, 3] %}
+      <button class="chip" type="button" data-example>{{ t('ask.example%d' % n) }}</button>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="notice">{{ t('ask.disabled') }}</p>
+    {% endif %}
+  </section>
+
   <section class="sheet findings">
     <h2 class="sheet__title">{{ t('doc.findings') }}</h2>
     <p class="hint">{{ t('doc.findings.hint') }}</p>
@@ -53,6 +74,12 @@
         <tbody data-findings></tbody>
       </table>
     </div>
+  </section>
+
+  <section class="sheet audit" aria-labelledby="audit-title">
+    <h2 class="sheet__title" id="audit-title">{{ t('audit.title') }}</h2>
+    <p class="hint">{{ t('audit.hint') }}</p>
+    <ol class="audit__list" data-audit></ol>
   </section>
 </section>
 {% endblock %}

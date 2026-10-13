@@ -12,6 +12,8 @@ def _int(name: str, default: int) -> int:
 @dataclass(frozen=True)
 class Settings:
     gemini_api_key: str
+    gemini_model: str
+    gemini_embed_model: str
     session_ttl_seconds: int
     max_sessions: int
     max_upload_bytes: int
@@ -21,7 +23,9 @@ class Settings:
 
 def load_settings() -> Settings:
     return Settings(
-        gemini_api_key=os.environ.get("GEMINI_API_KEY", ""),
+        gemini_api_key=os.environ.get("GEMINI_API_KEY", "").strip(),
+        gemini_model=os.environ.get("GEMINI_MODEL", "gemini-2.5-flash"),
+        gemini_embed_model=os.environ.get("GEMINI_EMBED_MODEL", "gemini-embedding-001"),
         session_ttl_seconds=_int("SESSION_TTL_SECONDS", 30 * 60),
         max_sessions=_int("MAX_SESSIONS", 200),
         max_upload_bytes=_int("MAX_UPLOAD_BYTES", 10 * 1024 * 1024),

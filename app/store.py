@@ -5,6 +5,7 @@ A session expires after `ttl_seconds` without use; when the store is full the se
 was used least recently is dropped. A server restart therefore deletes everything, by design.
 """
 
+import asyncio
 import secrets
 import threading
 import time
@@ -19,10 +20,10 @@ from kvkk_mask.pseudonymizer import Pseudonymizer
 @dataclass
 class AuditEntry:
     """One request to the LLM: exactly what left the server, and what it cost."""
-    kind: str
+    kind: str  # embed_document, embed_query or answer
     sent_text: str
-    input_tokens: int
-    output_tokens: int
+    input_tokens: int | None  # embedding responses do not report token counts
+    output_tokens: int | None
     latency_ms: int
 
 
@@ -36,6 +37,10 @@ class Session:
     excluded: set[str] = field(default_factory=set)  # tokens the user marked as wrong (all mentions)
     pseudonymizer: Pseudonymizer = field(default_factory=Pseudonymizer)
     audit: list[AuditEntry] = field(default_factory=list)
+    questions: int = 0
+    index: tuple[list[str], list[list[float]] | None] | None = None  # (masked chunks, vectors)
+    index_key: frozenset[str] | None = None  # the exclusions the index was built with
+    lock: asyncio.Lock = field(default_factory=asyncio.Lock)
 
 
 class SessionStore:

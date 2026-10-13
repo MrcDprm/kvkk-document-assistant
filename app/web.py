@@ -10,6 +10,8 @@ from starlette.datastructures import UploadFile
 
 from app.extract import ExtractError, extract_text, normalize_text
 from app.i18n import JS_KEYS, LANG_COOKIE, LANGS, TEXTS, get_lang, translator
+from app.llm import LLMError
+from app.rag import AskError, ask
 from app.store import Session
 from kvkk_mask import detect
 from kvkk_mask.fakegen import TEMPLATES, make_document
@@ -100,7 +102,12 @@ def document_page(request: Request) -> Response:
     if current_session(request) is None:
         return RedirectResponse("/?error=expired" if request.cookies.get(SESSION_COOKIE) else "/", status_code=303)
     t = translator(get_lang(request))
-    return render(request, "document.html", js_texts={k: t(k) for k in JS_KEYS})
+    return render(
+        request,
+        "document.html",
+        js_texts={k: t(k) for k in JS_KEYS},
+        ask_enabled=request.app.state.llm is not None,
+    )
 
 
 @router.post("/reset")
@@ -201,3 +208,52 @@ def api_toggle(request: Request, key: str) -> Response:
         return JSONResponse({"error": "not_found"}, status_code=404)
     session.excluded ^= {token}  # add if missing, remove if present
     return JSONResponse(document_payload(session))
+
+
+# --- Questions and audit log ---
+
+_ASK_STATUS = {"empty": 400, "too_long": 400, "limit": 429, "quota": 429, "unavailable": 503, "blocked": 502}
+
+
+@router.post("/api/ask")
+async def api_ask(request: Request) -> Response:
+    llm = request.app.state.llm
+    if llm is None:
+        return JSONResponse({"error": "disabled"}, status_code=503)
+    if not request.app.state.limiter.allow("ask", client_ip(request)):
+        return JSONResponse({"error": "rate_limited"}, status_code=429)
+    session = current_session(request)
+    if session is None:
+        return _expired()
+    try:
+        body = await request.json()
+    except ValueError:
+        body = None
+    # Only the one field we need is read from the body; its type is checked.
+    question = body.get("question") if isinstance(body, dict) else None
+    if not isinstance(question, str):
+        return JSONResponse({"error": "empty"}, status_code=400)
+    try:
+        result = await ask(session, question, llm, get_lang(request))
+    except (AskError, LLMError) as e:
+        return JSONResponse({"error": e.code}, status_code=_ASK_STATUS.get(e.code, 400))
+    return JSONResponse(result)
+
+
+@router.get("/api/audit")
+def api_audit(request: Request) -> Response:
+    session = current_session(request)
+    if session is None:
+        return _expired()
+    entries = [
+        {
+            "kind": a.kind,
+            "sent_text": a.sent_text,
+            "chars": len(a.sent_text),
+            "input_tokens": a.input_tokens,
+            "output_tokens": a.output_tokens,
+            "latency_ms": a.latency_ms,
+        }
+        for a in reversed(session.audit)  # newest first
+    ]
+    return JSONResponse({"entries": entries})

@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 
 from app.main import create_app
 from app.web import SESSION_COOKIE
+from tests.fake_llm import FakeLLM
 from tests.test_app import make_settings
 
 SAMPLE = "Kiracı Ayşe Yılmaz (T.C. 10000000146), Tel: 0532 123 45 67. Ödeme her ayın 5'inde yapılır."
@@ -261,3 +262,73 @@ def test_null_origin_is_refused(client):
 
 def test_referrer_policy_keeps_origin_for_own_posts(client):
     assert client.get("/").headers["referrer-policy"] == "same-origin"
+
+
+# --- Questions and audit log ---
+
+
+@pytest.fixture
+def llm():
+    return FakeLLM()
+
+
+@pytest.fixture
+def ask_client(llm):
+    return TestClient(create_app(make_settings(), llm=llm))
+
+
+def test_ask_answers_with_real_values(ask_client, llm):
+    analyze_text(ask_client)
+    response = ask_client.post("/api/ask", json={"question": "Kiracı kim?"})
+    assert response.status_code == 200
+    assert response.json()["answer"] == "Ayşe Yılmaz kiracıdır [1]."
+    assert "Ayşe" not in llm.sent_texts()
+
+
+def test_audit_shows_what_was_sent(ask_client):
+    analyze_text(ask_client)
+    assert ask_client.get("/api/audit").json() == {"entries": []}
+    ask_client.post("/api/ask", json={"question": "Ayşe Yılmaz kim?"})
+    [entry] = ask_client.get("/api/audit").json()["entries"]
+    assert entry["kind"] == "answer"
+    assert "[KISI_1] kim?" in entry["sent_text"]
+    assert "Ayşe" not in entry["sent_text"]
+    assert entry["input_tokens"] == 120
+
+
+@pytest.mark.parametrize("body", [{}, {"question": 42}, {"question": None}, [], "text"])
+def test_ask_rejects_bad_bodies(ask_client, body):
+    analyze_text(ask_client)
+    assert ask_client.post("/api/ask", json=body).status_code == 400
+
+
+def test_ask_rejects_invalid_json(ask_client):
+    analyze_text(ask_client)
+    response = ask_client.post("/api/ask", content=b"{not json", headers={"content-type": "application/json"})
+    assert response.status_code == 400
+
+
+def test_ask_without_session(ask_client):
+    assert ask_client.post("/api/ask", json={"question": "x"}).status_code == 404
+
+
+@pytest.mark.parametrize("code, status", [("quota", 429), ("unavailable", 503), ("blocked", 502)])
+def test_llm_errors_become_codes(code, status):
+    client = TestClient(create_app(make_settings(), llm=FakeLLM(error=code)))
+    analyze_text(client)
+    response = client.post("/api/ask", json={"question": "Kira?"})
+    assert response.status_code == status
+    assert response.json() == {"error": code}
+
+
+def test_ask_disabled_without_key(client):
+    analyze_text(client)
+    assert client.post("/api/ask", json={"question": "x"}).json() == {"error": "disabled"}
+    assert "Soru sorma bu sunucuda kapalı" in client.get("/document").text
+
+
+def test_ask_rate_limit(ask_client):
+    ask_client.app.state.limiter._limits["ask"] = (1, 60)
+    analyze_text(ask_client)
+    ask_client.post("/api/ask", json={"question": "a?"})
+    assert ask_client.post("/api/ask", json={"question": "b?"}).json() == {"error": "rate_limited"}

@@ -12,6 +12,7 @@ from starlette.formparsers import MultiPartParser
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 from app.config import Settings, load_settings
+from app.llm import LLM, GeminiLLM
 from app.ratelimit import RateLimiter
 from app.store import SessionStore
 from app.web import render, router
@@ -37,6 +38,7 @@ SECURITY_HEADERS = {
 RATE_LIMITS = {
     "analyze": (20, 10 * 60),  # 20 documents per 10 minutes
     "toggle": (300, 60),
+    "ask": (15, 10 * 60),  # each question costs free-tier quota
 }
 
 # Starlette writes uploads above 1 MB to a temporary file on disk. Documents must never touch
@@ -88,13 +90,17 @@ class BodySizeLimit:
         await response(scope, receive, send)
 
 
-def create_app(settings: Settings | None = None) -> FastAPI:
+def create_app(settings: Settings | None = None, llm: LLM | None = None) -> FastAPI:
+    """`llm` lets tests pass a fake model; without a key, asking questions is turned off."""
     settings = settings or load_settings()
     # The interactive API docs are not needed in production.
     app = FastAPI(title="KVKK Document Assistant", docs_url=None, redoc_url=None, openapi_url=None)
     app.state.settings = settings
     app.state.store = SessionStore(settings.session_ttl_seconds, settings.max_sessions)
     app.state.limiter = RateLimiter(RATE_LIMITS)
+    if llm is None and settings.gemini_api_key:
+        llm = GeminiLLM(settings.gemini_api_key, settings.gemini_model, settings.gemini_embed_model)
+    app.state.llm = llm
 
     app.include_router(router)
     app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")

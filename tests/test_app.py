@@ -8,6 +8,8 @@ from app.main import create_app
 def make_settings(**overrides) -> Settings:
     values = dict(
         gemini_api_key="",
+        gemini_model="test-model",
+        gemini_embed_model="test-embed",
         session_ttl_seconds=60,
         max_sessions=10,
         max_upload_bytes=10 * 1024 * 1024,
