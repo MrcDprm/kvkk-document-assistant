@@ -7,6 +7,7 @@ from urllib.parse import urlparse
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.formparsers import MultiPartParser
 from starlette.types import ASGIApp, Receive, Scope, Send
@@ -104,7 +105,7 @@ def create_app(settings: Settings | None = None, llm: LLM | None = None, ner=Non
         llm = GeminiLLM(settings.gemini_api_key, settings.gemini_model, settings.gemini_embed_model)
     app.state.llm = llm
     if ner is None and settings.ner_model_dir and NerModel.available(settings.ner_model_dir):
-        ner = NerModel(settings.ner_model_dir)
+        ner = NerModel(settings.ner_model_dir, threads=settings.ner_threads)
         logger.info("NER model loaded from %s", settings.ner_model_dir)
     app.state.ner = ner
 
@@ -147,8 +148,10 @@ def create_app(settings: Settings | None = None, llm: LLM | None = None, ner=Non
     def healthz() -> dict:
         return {"status": "ok"}
 
-    # Added last, so it is the outermost of our middlewares. 256 KB covers the multipart overhead.
+    # Added last, so they are the outermost middlewares. 256 KB covers the multipart overhead.
     app.add_middleware(BodySizeLimit, max_bytes=settings.max_upload_bytes + 256 * 1024)
+    # Requests for other host names are refused (the CSRF check above relies on the Host header).
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.allowed_hosts)
     return app
 
 

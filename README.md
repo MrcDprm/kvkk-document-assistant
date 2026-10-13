@@ -7,7 +7,7 @@ Ask an LLM about documents that contain Turkish personal data without sending th
 > Draft: work in progress.
 
 ## Features (MVP plan)
-- Upload `.txt`, `.pdf` or `.docx` (max 10 MB, about 100 pages of text) or paste text
+- Upload `.txt`, `.pdf` or `.docx` (max 10 MB, about 40 pages of text) or paste text
 - Turkish recognizers with validation: TCKN and VKN (checksum), IBAN (mod-97), card number (Luhn), phone, e-mail, licence plate, full name
 - Before/after view with consistent pseudonyms (`[KISI_1]`); remove a false positive with one click
 - Ask questions about the document: retrieval over masked chunks, answers with sources, pseudonyms restored locally

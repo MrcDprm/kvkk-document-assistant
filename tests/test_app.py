@@ -11,10 +11,12 @@ def make_settings(**overrides) -> Settings:
         gemini_model="test-model",
         gemini_embed_model="test-embed",
         ner_model_dir="",  # tests never depend on the local model files
+        ner_threads=1,
+        allowed_hosts=["testserver"],
         session_ttl_seconds=60,
         max_sessions=10,
         max_upload_bytes=10 * 1024 * 1024,
-        max_text_chars=200_000,
+        max_text_chars=100_000,
         cookie_secure=False,
     )
     values.update(overrides)
@@ -60,3 +62,7 @@ def test_unexpected_error_hides_details():
     assert response.json() == {"error": "internal_error"}
     assert "secret detail" not in response.text
     assert "content-security-policy" in response.headers
+
+
+def test_unknown_host_is_refused(client):
+    assert client.get("/healthz", headers={"host": "evil.example"}).status_code == 400

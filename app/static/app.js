@@ -28,6 +28,27 @@ function setupThemeToggle() {
 
 // --- Upload form ---
 
+function setupBusyButton() {
+  // Analysis can take a while on the small server: show that something is happening.
+  const form = document.querySelector("form.intake");
+  if (!form) return;
+  form.addEventListener("submit", () => {
+    const button = form.querySelector("[data-busy]");
+    button.dataset.label = button.textContent;
+    button.disabled = true;
+    button.textContent = button.dataset.busy;
+    button.classList.add("is-busy");
+  });
+  // Coming back with the browser's back button restores the page from cache: reset the button.
+  window.addEventListener("pageshow", (e) => {
+    if (!e.persisted) return;
+    const button = form.querySelector("[data-busy]");
+    button.disabled = false;
+    button.classList.remove("is-busy");
+    button.textContent = button.dataset.label || button.textContent;
+  });
+}
+
 function setupFilePicker() {
   const input = document.getElementById("file");
   const label = document.querySelector("[data-file-name]");
@@ -282,5 +303,6 @@ function setupDocument() {
 document.addEventListener("DOMContentLoaded", () => {
   setupThemeToggle();
   setupFilePicker();
+  setupBusyButton();
   setupDocument();
 });
