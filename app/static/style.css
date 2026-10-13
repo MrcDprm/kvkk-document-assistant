@@ -185,13 +185,13 @@ svg { display: block; }
 }
 
 .tabs__radio { position: absolute; opacity: 0; pointer-events: none; }
-.tabs__list { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 20px; overflow-x: auto; }
+.tabs__list { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 20px; }
 .tabs__tab {
   padding: 10px 14px; font-weight: 600; font-size: .92rem; color: var(--ink-3); cursor: pointer;
   border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap;
 }
 .tabs__tab:hover { color: var(--ink); }
-@media (max-width: 560px) { .tabs__tab { flex: 1; text-align: center; padding: 10px 6px; font-size: .86rem; } }
+@media (max-width: 560px) { .tabs__tab { flex: 1; text-align: center; padding: 10px 6px; font-size: .86rem; white-space: normal; } }
 #mode-file:checked ~ .tabs__list [for="mode-file"],
 #mode-text:checked ~ .tabs__list [for="mode-text"],
 #mode-demo:checked ~ .tabs__list [for="mode-demo"] { color: var(--accent); border-bottom-color: var(--accent); }
