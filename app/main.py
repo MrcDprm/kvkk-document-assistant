@@ -1,7 +1,6 @@
 """FastAPI application: app factory, security headers and error handling."""
 
 import logging
-import os
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -164,18 +163,6 @@ def create_app(settings: Settings | None = None, llm: LLM | None = None, ner=Non
     @app.api_route("/healthz", methods=["GET", "HEAD"])
     def healthz() -> dict:
         return {"status": "ok"}
-
-    # TEMPORARY (remove after checking Render's proxy headers): shows the caller only the
-    # IP-related headers of their own request. Off unless DEBUG_CLIENT_IP=1.
-    if os.environ.get("DEBUG_CLIENT_IP") == "1":
-        @app.get("/debug/client-ip")
-        def debug_client_ip(request: Request) -> dict:
-            names = ("x-forwarded-for", "cf-connecting-ip", "true-client-ip", "x-real-ip", "forwarded")
-            return {
-                "client_host": request.client.host if request.client else None,
-                "headers": {n: request.headers.get(n) for n in names},
-                "all_header_names": sorted(request.headers.keys()),
-            }
 
     # Added last, so they are the outermost middlewares. 256 KB covers the multipart overhead.
     app.add_middleware(BodySizeLimit, max_bytes=settings.max_upload_bytes + 256 * 1024)
