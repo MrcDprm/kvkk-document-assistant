@@ -52,7 +52,7 @@ def first_names() -> frozenset[str]:
 
 
 @lru_cache(maxsize=1)
-def _non_name_words() -> frozenset[str]:
+def non_name_words() -> frozenset[str]:
     return _load_words("non_name_words_tr.txt")
 
 
@@ -67,9 +67,11 @@ def _runs(text: str) -> list[list[re.Match]]:
     return runs
 
 
-def find_names(text: str) -> list[Entity]:
+def find_names(text: str, strong_only: bool = False) -> list[Entity]:
+    """Names found by the rules. `strong_only`: only names backed by context (a title or label
+    before them, Bey/Hanım after them), not the ones found through the dictionary alone."""
     known_first_names = first_names()
-    stop = _non_name_words()
+    stop = non_name_words()
     entities: list[Entity] = []
 
     for run in _runs(text):
@@ -97,7 +99,7 @@ def find_names(text: str) -> list[Entity]:
                     break
 
             honorific = j + 1 < len(run) and words[j + 1] in _HONORIFICS
-            if j > i or titled or honorific:
+            if titled or honorific or (j > i and not strong_only):
                 start, end = run[i].start(), run[j].end()
                 entities.append(Entity(EntityType.KISI, start, end, text[start:end]))
             i = j + 1

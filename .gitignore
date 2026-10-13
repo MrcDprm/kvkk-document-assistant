@@ -17,3 +17,6 @@ htmlcov/
 .idea/
 Thumbs.db
 .DS_Store
+
+# Trained NER model (downloaded from the GitHub Release, not committed)
+models/
