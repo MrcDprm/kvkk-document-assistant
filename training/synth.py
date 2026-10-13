@@ -21,6 +21,9 @@ LABELS = ["O", "B-PER", "I-PER", "B-ORG", "I-ORG", "B-LOC", "I-LOC"]
 EVAL_ONLY = {
     "zümrüt", "tayyar", "necdet", "feyyaz", "rasim", "ümmühan",
     "karaosmanoğlu", "gündoğdu", "karabulut", "kocabaş",
+    # eval/hard_cases_2.txt
+    "cebrail", "nazlıcan", "ferdane", "ruhsar", "yekta", "sabahat", "yahya",
+    "tuzcuoğlu", "ekşioğlu", "bilgiç", "hacıosmanoğlu", "sungur", "zorlu",
 }
 
 # Surnames are also built from common parts, so the model learns their shape

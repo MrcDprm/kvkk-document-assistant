@@ -30,12 +30,12 @@ def test_eval_only_list_covers_unknown_hard_case_names():
     from kvkk_mask.recognizers import EntityType
 
     missing = set()
-    for case in load_hard_cases():
+    for case in load_hard_cases() + load_hard_cases("hard_cases_2.txt"):
         for e in case.gold:
             if e.type is EntityType.KISI:
                 first = tr_lower(e.text.split()[0])
-                if first not in first_names() and first not in EVAL_ONLY:
-                    missing.add(first)
+                if first not in first_names() and not any(first.startswith(x) for x in EVAL_ONLY):
+                    missing.add(first)  # startswith: "ekşioğlunun" is covered by "ekşioğlu"
     assert missing == set()
 
 

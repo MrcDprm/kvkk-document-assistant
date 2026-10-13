@@ -1,0 +1,65 @@
+# Second set of hand-written hard cases (held out).
+# Written after the detectors were tuned on hard_cases.txt and never used for tuning, so it
+# measures how well they generalise. Same format: [[TYPE:value]], blank line between cases.
+# A suffix glued to a name (no apostrophe) is labelled as part of the name: [[KISI:ekşioğlunun]].
+
+Sayın [[KISI:Cebrail Tuzcuoğlu]], 14.10.2026 tarihli başvurunuz değerlendirilmiştir.
+
+[[KISI:nazlıcan ekşioğlunun]] maaşı hangi hesaba yatıyor?
+
+Dilekçe sahibi: [[KISI:FERDANE BİLGİÇ]] T.C. Kimlik No: [[TCKN:47759458010]]
+
+Toplantı notu: [[KISI:Yekta]] Bey projeyi üstlendi, [[KISI:Ruhsar Sungur]] destek verecek.
+
+Zorlu Enerji ve Sungur Tekstil A.Ş. arasında protokol imzalandı.
+
+Hacıosmanoğlu Caddesi No: 4 Bahçelievler/İstanbul adresine teslim edildi.
+
+kargo [[KISI:yahya zorlu]] adına mı gönderildi
+
+Ekte [[KISI:Sabahat Hacıosmanoğlu]]'na ait vekâletname bulunmaktadır.
+
+İletişim: [[EPOSTA:ruhsar.sungur@firma.com.tr]] / [[TELEFON:0216 444 12 34]]
+
+Mahkeme heyeti: Başkan [[KISI:Cebrail Tuzcuoğlu]], Üye [[KISI:Nazlıcan Ekşioğlu]]
+
+Bayram tatili nedeniyle ofis kapalıdır.
+
+Ceylan Pastanesi'nden sipariş verildi.
+
+Ödemeyi [[KISI:Ayten Bilgiç]] yaptı, dekontu [[KISI:Yahya]] Bey'e ilettim.
+
+Hasta [[KISI:Ferdane Sungur]], 62 yaşında, [[PLAKA:35 KZ 812]] plakalı araçla getirildi.
+
+Sevgi ve saygılarımla,
+[[KISI:Yekta Zorlu]]
+
+Umut ederim ki toplantı verimli geçer.
+
+Deniz manzaralı ofis [[KISI:Nazlıcan]] Hanım'a gösterildi.
+
+Davacı vekili Av. [[KISI:Ruhsar Ekşioğlu]] duruşmaya katılmadı.
+
+Fatura adresi: Bahar Sokak No: 7, Karşıyaka/İzmir
+
+[[KISI:cebrail]] beyin aracının plakası ne
+
+Kardeşi [[KISI:Ayten]] de gelecek.
+
+Yeni müdürümüz [[KISI:Sabahat Zorlu]] ile tanışma toplantısı pazartesi.
+
+Gönderen: [[EPOSTA:yekta.tuzcuoglu@posta.com]]
+
+Vergi dairesi Kozyatağı, V.K.N. [[VKN:5109549417]]
+
+Kredi kartı: [[KART:5500 0000 0000 0004]]
+
+Polat Holding yönetim kurulu toplandı.
+
+Sözleşme imzalanırken [[KISI:YAHYA SUNGUR]] ve [[KISI:FERDANE ZORLU]] hazır bulundu.
+
+Mehmet Akif Ersoy Üniversitesi'nde ders veriyor.
+
+Atatürk Bulvarı üzerindeki şube taşındı.
+
+[[KISI:Nazlıcan Tuzcuoğlu]]'nun IBAN'ı [[IBAN:TR73 0004 6048 2690 5929 8188 47]] mi?
