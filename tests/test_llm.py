@@ -116,6 +116,22 @@ def test_groq_only():
 
 
 def test_groq_then_gemini_models():
-    llm = build_llm(make_settings(groq_api_key="g", gemini_api_key="k", gemini_models=["a", "b"]))
-    assert [type(g).__name__ for g in llm._generators] == ["GroqLLM", "GeminiLLM", "GeminiLLM"]
+    settings = make_settings(groq_api_key="g", groq_models=["x", "y"], gemini_api_key="k", gemini_models=["a", "b"])
+    llm = build_llm(settings)
+    assert [type(g).__name__ for g in llm._generators] == ["GroqLLM", "GroqLLM", "GeminiLLM", "GeminiLLM"]
     assert llm._embedder is not None
+
+
+@pytest.mark.parametrize(
+    "model, expected",
+    [("openai/gpt-oss-120b", "low"), ("qwen/qwen3.8-27b", "none"), ("some/other-model", None)],
+)
+def test_reasoning_is_kept_short(model, expected):
+    seen = {}
+
+    def handler(request):
+        seen.update(json.loads(request.content))
+        return httpx.Response(200, json={"choices": [{"message": {"content": "ok"}}], "usage": {}})
+
+    run(GroqLLM("k", model, transport=httpx.MockTransport(handler)).generate("s", "p"))
+    assert seen.get("reasoning_effort") == expected

@@ -3,8 +3,9 @@
 Only masked text is ever passed to this module.
 
 Free tiers are small and sometimes busy (Gemini 2.5 Flash: 20 requests a day), so answers go
-through a chain: Groq first (fast, ~1,000 requests a day), then Gemini models. A provider that
-is out of quota or unavailable is skipped. Embeddings always come from Gemini (Groq has none).
+through a chain: Groq models first (answers in under a second, larger free quotas), then Gemini
+models. Each model has its own daily quota; one that is out of quota or unavailable is skipped.
+Embeddings always come from Gemini (Groq has none).
 """
 
 import asyncio
@@ -115,6 +116,11 @@ class GeminiLLM:
         )
 
 
+# Reasoning models think before answering. The answer is in the given excerpts, so thinking is
+# kept to a minimum: it only adds latency and tokens. The parameter differs per model family.
+_REASONING = {"openai/gpt-oss": {"reasoning_effort": "low"}, "qwen/qwen3": {"reasoning_effort": "none"}}
+
+
 class GroqLLM:
     """Groq's OpenAI-compatible chat API, called with plain HTTP (no extra SDK)."""
 
@@ -134,6 +140,9 @@ class GroqLLM:
             "temperature": 0.2,
             "max_tokens": 1024,
         }
+        for prefix, params in _REASONING.items():
+            if self._model.startswith(prefix):
+                body.update(params)
         try:
             response = await self._client.post(self.URL, json=body)
         except httpx.HTTPError as exc:

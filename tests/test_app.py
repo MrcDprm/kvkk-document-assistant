@@ -11,7 +11,7 @@ def make_settings(**overrides) -> Settings:
         gemini_models=["test-model"],
         gemini_embed_model="test-embed",
         groq_api_key="",
-        groq_model="test-groq",
+        groq_models=["test-groq"],
         ner_model_dir="",  # tests never depend on the local model files
         ner_threads=1,
         allowed_hosts=["testserver"],

@@ -20,7 +20,7 @@ class Settings:
     gemini_models: list[str]
     gemini_embed_model: str
     groq_api_key: str
-    groq_model: str
+    groq_models: list[str]
     ner_model_dir: str
     ner_threads: int
     allowed_hosts: list[str]
@@ -34,11 +34,11 @@ class Settings:
 def load_settings() -> Settings:
     return Settings(
         gemini_api_key=os.environ.get("GEMINI_API_KEY", "").strip(),
-        # Tried in this order after Groq; each model has its own free daily quota.
+        # Tried after the Groq models, in this order; each model has its own free daily quota.
         gemini_models=_list("GEMINI_MODELS", "gemini-2.5-flash,gemini-3.1-flash-lite"),
         gemini_embed_model=os.environ.get("GEMINI_EMBED_MODEL", "gemini-embedding-001"),
         groq_api_key=os.environ.get("GROQ_API_KEY", "").strip(),
-        groq_model=os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile"),
+        groq_models=_list("GROQ_MODELS", "openai/gpt-oss-120b,qwen/qwen3.8-27b"),
         # Trained name recognizer; without it the rules alone are used. Empty string turns it off.
         ner_model_dir=os.environ.get("NER_MODEL_DIR", "models/ner"),
         # The free server has 0.1 CPU: more threads would only add overhead there.

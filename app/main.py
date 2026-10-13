@@ -93,10 +93,10 @@ class BodySizeLimit:
 
 
 def build_llm(settings: Settings) -> LLM | None:
-    """Groq first (fast, larger free quota), then the Gemini models; None if no key is set."""
+    """Groq models first (fast, larger free quotas), then Gemini models; None if no key is set."""
     generators = []
     if settings.groq_api_key:
-        generators.append(GroqLLM(settings.groq_api_key, settings.groq_model))
+        generators += [GroqLLM(settings.groq_api_key, m) for m in settings.groq_models]
     gemini = []
     if settings.gemini_api_key:
         gemini = [GeminiLLM(settings.gemini_api_key, m, settings.gemini_embed_model) for m in settings.gemini_models]
