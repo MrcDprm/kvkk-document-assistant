@@ -38,9 +38,10 @@ _IBAN = re.compile(r"\bTR\d{2}(?:\s?\d{4}){5}\s?\d{2}(?!\d)", re.IGNORECASE)
 _CARD = re.compile(r"(?<![\d-])(?:\d{4}[ -]?){3}\d{1,7}(?!\d)")
 _PHONE = re.compile(
     r"(?<![\d+])"
-    r"(?P<prefix>\+90[\s-]?|0090[\s-]?|0[\s-]?)?"
-    r"\(?(?P<area>[2-5]\d{2})\)?[\s-]?"
-    r"\d{3}[\s-]?\d{2}[\s-]?\d{2}(?!\d)"
+    r"(?:\(0(?P<area_p>[2-5]\d{2})\)"  # (0212) 555 12 34
+    # 0532..., 0 (532)..., +90 532...; a "(" is only taken when ")" closes the area code
+    r"|(?P<prefix>(?:\+90|0090|0)[\s-]?)?(?P<open>\()?(?P<area>[2-5]\d{2})(?(open)\)))"
+    r"[\s-]?\d{3}[\s-]?\d{2}[\s-]?\d{2}(?!\d)"
 )
 _EMAIL = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}\b")
 # Province code (01-81), 1-3 letters, 2-5 digits. Uppercase only, so "34 km 120" is not a plate.
@@ -93,7 +94,7 @@ def _candidates(text: str):
     for m in _PHONE.finditer(text):
         # Without a 0 / +90 prefix only mobile numbers (5xx) are accepted;
         # a bare 10-digit number starting with 2-4 is too often something else.
-        if m.group("prefix") or m.group("area").startswith("5"):
+        if m.group("prefix") or m.group("area_p") or m.group("area").startswith("5"):
             yield EntityType.TELEFON, m
 
     for m in _PLATE.finditer(text):

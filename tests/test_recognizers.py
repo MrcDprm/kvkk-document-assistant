@@ -71,6 +71,8 @@ def test_card_failing_luhn_is_ignored():
         "532 123 45 67",
         "0212 555 12 34",
         "0212-555-12-34",
+        "(0212) 555 12 34",
+        "(532) 123 45 67",
     ],
 )
 def test_phone(phone):
@@ -80,6 +82,11 @@ def test_phone(phone):
 def test_landline_with_parentheses():
     result = find_entities("Tel: 0 (212) 555 12 34")
     assert [(e.type, e.text) for e in result] == [(EntityType.TELEFON, "0 (212) 555 12 34")]
+
+
+def test_parentheses_around_whole_number_are_not_included():
+    assert found("Ayşe (05321234567)") == [(EntityType.TELEFON, "05321234567")]
+    assert found("Ayşe (532 123 45 67)") == [(EntityType.TELEFON, "532 123 45 67")]
 
 
 def test_bare_landline_without_prefix_is_ignored():
