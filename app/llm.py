@@ -9,6 +9,7 @@ Embeddings always come from Gemini (Groq has none).
 """
 
 import asyncio
+import logging
 import time
 from dataclasses import dataclass
 from typing import Protocol
@@ -16,6 +17,8 @@ from typing import Protocol
 import httpx
 from google import genai
 from google.genai import errors, types
+
+logger = logging.getLogger("kvkk")
 
 TIMEOUT_SECONDS = 45
 EMBED_BATCH = 100  # the API accepts up to 100 texts per embedding request
@@ -188,5 +191,7 @@ class ChainLLM:
             except LLMError as exc:
                 if exc.code == "blocked":
                     raise  # another model would most likely refuse too
+                # Only the model name and error code are logged: never the prompt or any data.
+                logger.warning("model %s skipped: %s", getattr(generator, "_model", "?"), exc.code)
                 last = exc
         raise last

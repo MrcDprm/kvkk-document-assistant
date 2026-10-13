@@ -19,6 +19,8 @@ from app.store import SessionStore
 from app.web import render, router
 from kvkk_mask.ner import NerModel
 
+# Our own messages (model loaded, provider skipped) in the Render log, next to uvicorn's.
+logging.basicConfig(level=logging.INFO, format="%(levelname)s:     %(name)s: %(message)s")
 logger = logging.getLogger("kvkk")
 
 SECURITY_HEADERS = {

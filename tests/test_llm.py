@@ -135,3 +135,12 @@ def test_reasoning_is_kept_short(model, expected):
 
     run(GroqLLM("k", model, transport=httpx.MockTransport(handler)).generate("s", "p"))
     assert seen.get("reasoning_effort") == expected
+
+
+def test_skipped_model_is_logged_without_data(caplog):
+    first = Fixed("groq", error="quota")
+    first._model = "openai/gpt-oss-120b"
+    with caplog.at_level("WARNING", logger="kvkk"):
+        run(ChainLLM([first, Fixed("gemini")], None).generate("secret system", "Ayşe Yılmaz prompt"))
+    assert "openai/gpt-oss-120b skipped: quota" in caplog.text
+    assert "Ayşe" not in caplog.text
