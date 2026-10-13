@@ -1,7 +1,10 @@
-"""Fine-tune DistilBERTurk for Turkish NER (PER, ORG, LOC) and export it as an int8 ONNX model.
+"""Fine-tune a Turkish BERT for NER (PER, ORG, LOC) and export it as an int8 ONNX model.
 
 Runs on Google Colab with a GPU (see train_ner.ipynb); a few minutes on a T4.
-    python -m training.train_ner --out /content/kvkk-ner
+    python -m training.train_ner --model mini --out /content/kvkk-ner-mini
+
+Three base models are supported, from large to small: the free server has 0.1 CPU, so the
+speed / accuracy trade-off is measured instead of assumed.
 
 Data: WikiANN Turkish (Wikipedia sentences) + synthetic document/question sentences
 (training/synth.py). The output folder holds everything the app needs at runtime:
@@ -15,9 +18,16 @@ import shutil
 import time
 from pathlib import Path
 
+from kvkk_mask.names import tr_lower
 from training.synth import LABELS, SynthGenerator
 
-BASE_MODEL = "dbmdz/distilbert-base-turkish-cased"
+# name: (Hugging Face id, lower-case input?, learning rate)
+# The YTU Cosmos models are uncased: they expect text lower-cased with Turkish rules.
+BASE_MODELS = {
+    "distil": ("dbmdz/distilbert-base-turkish-cased", False, 5e-5),  # 6 layers, 768 hidden
+    "small": ("ytu-ce-cosmos/turkish-small-bert-uncased", True, 1e-4),  # 4 layers, 512 hidden
+    "mini": ("ytu-ce-cosmos/turkish-mini-bert-uncased", True, 2e-4),  # 4 layers, 256 hidden
+}
 MAX_LENGTH = 128
 SYNTH_TRAIN = 20_000
 SYNTH_DEV = 2_000
@@ -48,12 +58,16 @@ def build_datasets(seed: int = 42):
     return train, {"wikiann": wiki_dev, "synthetic": synth_dev}
 
 
-def encode(tokenizer, tokens: list[str], tags: list[str]) -> dict:
+def prepare(tokens: list[str], lowercase: bool) -> list[str]:
+    return [tr_lower(t) for t in tokens] if lowercase else tokens
+
+
+def encode(tokenizer, tokens: list[str], tags: list[str], lowercase: bool = False) -> dict:
     """Tokenize pre-split words; only the first sub-word of each word carries the label.
 
     Other sub-words get -100, which the loss ignores. ("Karaosmanoğlu" -> "Kara", "##osman", ...)
     """
-    enc = tokenizer(tokens, is_split_into_words=True, truncation=True, max_length=MAX_LENGTH)
+    enc = tokenizer(prepare(tokens, lowercase), is_split_into_words=True, truncation=True, max_length=MAX_LENGTH)
     labels, previous = [], None
     for word_id in enc.word_ids():
         if word_id is None or word_id == previous:
@@ -104,19 +118,20 @@ def word_predictions(word_ids: list, logits_row) -> list[int]:
 
 # --- Training ---
 
-def train(out: Path, epochs: int, batch_size: int, lr: float, seed: int) -> None:
+def train(out: Path, base: str, epochs: int, batch_size: int, seed: int) -> None:
     import torch
     from torch.utils.data import DataLoader
     from transformers import AutoModelForTokenClassification, AutoTokenizer, DataCollatorForTokenClassification
     from transformers import get_linear_schedule_with_warmup
 
+    base_model, lowercase, lr = BASE_MODELS[base]
     torch.manual_seed(seed)
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"device: {device}")
 
-    tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL)
+    tokenizer = AutoTokenizer.from_pretrained(base_model)
     model = AutoModelForTokenClassification.from_pretrained(
-        BASE_MODEL,
+        base_model,
         num_labels=len(LABELS),
         id2label=dict(enumerate(LABELS)),
         label2id={label: i for i, label in enumerate(LABELS)},
@@ -125,7 +140,7 @@ def train(out: Path, epochs: int, batch_size: int, lr: float, seed: int) -> None
     train_rows, dev_sets = build_datasets(seed)
     print(f"train sentences: {len(train_rows)}; dev: " + ", ".join(f"{k} {len(v)}" for k, v in dev_sets.items()))
     collate = DataCollatorForTokenClassification(tokenizer)
-    loader = DataLoader([encode(tokenizer, t, g) for t, g in train_rows], batch_size=batch_size, shuffle=True, collate_fn=collate)
+    loader = DataLoader([encode(tokenizer, t, g, lowercase) for t, g in train_rows], batch_size=batch_size, shuffle=True, collate_fn=collate)
 
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=0.01)
     steps = epochs * len(loader)
@@ -150,35 +165,36 @@ def train(out: Path, epochs: int, batch_size: int, lr: float, seed: int) -> None
             total += loss.item()
             if step % 200 == 0:
                 print(f"epoch {epoch + 1} step {step}/{len(loader)} loss {total / step:.4f}")
-        scores = {name: evaluate_torch(model, tokenizer, rows, device) for name, rows in dev_sets.items()}
+        scores = {name: evaluate_torch(model, tokenizer, rows, device, lowercase) for name, rows in dev_sets.items()}
         print(f"epoch {epoch + 1} done in {time.time() - started:.0f}s: " + json.dumps({k: v['ALL'] for k, v in scores.items()}))
 
     out.mkdir(parents=True, exist_ok=True)
     hf_dir = out / "hf"
     model.save_pretrained(hf_dir)
     tokenizer.save_pretrained(hf_dir)
-    export_onnx(model.cpu().eval(), tokenizer, out)
+    export_onnx(model.cpu().eval(), tokenizer, out, lowercase)
 
     metrics = {
-        "base_model": BASE_MODEL,
+        "base_model": base_model,
+        "parameters": sum(p.numel() for p in model.parameters()),
         "epochs": epochs,
         "train_sentences": len(train_rows),
         "training_seconds": round(time.time() - started),
         "pytorch": scores,
-        "onnx_int8": {name: evaluate_onnx(out, tokenizer, rows) for name, rows in dev_sets.items()},
+        "onnx_int8": {name: evaluate_onnx(out, tokenizer, rows, lowercase) for name, rows in dev_sets.items()},
     }
     (out / "metrics.json").write_text(json.dumps(metrics, indent=2), encoding="utf-8")
     print(json.dumps(metrics, indent=2))
 
 
-def evaluate_torch(model, tokenizer, rows, device) -> dict:
+def evaluate_torch(model, tokenizer, rows, device, lowercase: bool) -> dict:
     import torch
 
     model.eval()
     gold, predicted = [], []
     with torch.no_grad():
         for tokens, tags in rows:
-            enc = tokenizer(tokens, is_split_into_words=True, truncation=True, max_length=MAX_LENGTH, return_tensors="pt")
+            enc = tokenizer(prepare(tokens, lowercase), is_split_into_words=True, truncation=True, max_length=MAX_LENGTH, return_tensors="pt")
             logits = model(input_ids=enc["input_ids"].to(device), attention_mask=enc["attention_mask"].to(device)).logits[0].cpu()
             labels = word_predictions(enc.word_ids(), logits)
             gold.append(tags[:len(labels)])
@@ -188,11 +204,11 @@ def evaluate_torch(model, tokenizer, rows, device) -> dict:
 
 # --- Export ---
 
-def export_onnx(model, tokenizer, out: Path) -> None:
+def export_onnx(model, tokenizer, out: Path, lowercase: bool) -> None:
     import torch
     from onnxruntime.quantization import QuantType, quantize_dynamic
 
-    sample = tokenizer(["Ayşe", "Yılmaz", "aradı"], is_split_into_words=True, return_tensors="pt")
+    sample = tokenizer(prepare(["Ayşe", "Yılmaz", "aradı"], lowercase), is_split_into_words=True, return_tensors="pt")
     fp32 = out / "model-fp32.onnx"
     torch.onnx.export(
         model,
@@ -212,16 +228,17 @@ def export_onnx(model, tokenizer, out: Path) -> None:
 
     tokenizer.backend_tokenizer.save(str(out / "tokenizer.json"))
     (out / "labels.json").write_text(json.dumps(LABELS), encoding="utf-8")
+    (out / "preprocess.json").write_text(json.dumps({"lowercase": lowercase}), encoding="utf-8")
 
 
-def evaluate_onnx(out: Path, tokenizer, rows) -> dict:
+def evaluate_onnx(out: Path, tokenizer, rows, lowercase: bool) -> dict:
     import numpy as np
     import onnxruntime as ort
 
     session = ort.InferenceSession(str(out / "model.onnx"), providers=["CPUExecutionProvider"])
     gold, predicted = [], []
     for tokens, tags in rows:
-        enc = tokenizer(tokens, is_split_into_words=True, truncation=True, max_length=MAX_LENGTH, return_tensors="np")
+        enc = tokenizer(prepare(tokens, lowercase), is_split_into_words=True, truncation=True, max_length=MAX_LENGTH, return_tensors="np")
         logits = session.run(["logits"], {
             "input_ids": enc["input_ids"].astype(np.int64),
             "attention_mask": enc["attention_mask"].astype(np.int64),
@@ -234,13 +251,13 @@ def evaluate_onnx(out: Path, tokenizer, rows) -> dict:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--model", choices=BASE_MODELS, default="mini")
     parser.add_argument("--out", type=Path, default=Path("kvkk-ner"))
-    parser.add_argument("--epochs", type=int, default=3)
+    parser.add_argument("--epochs", type=int, default=4)
     parser.add_argument("--batch-size", type=int, default=32)
-    parser.add_argument("--lr", type=float, default=5e-5)
     parser.add_argument("--seed", type=int, default=42)
     args = parser.parse_args()
-    train(args.out, args.epochs, args.batch_size, args.lr, args.seed)
+    train(args.out, args.model, args.epochs, args.batch_size, args.seed)
     shutil.rmtree(args.out / "hf", ignore_errors=True)  # only the ONNX files are shipped
     archive = shutil.make_archive(str(args.out), "zip", args.out)
     print(f"done: {archive}")
