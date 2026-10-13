@@ -130,7 +130,7 @@ function setupDocument() {
   function render(data) {
     parts.filename.textContent = data.filename;
     parts.summary.textContent =
-      `${t("doc.summary", { count: data.masked_count })} · ${t("doc.chars", { count: data.chars.toLocaleString(lang) })}`;
+      `${t("doc.summary", { count: data.masked_count })} · ${t("doc.chars", { count: data.chars.toLocaleString(lang) })} · ${t(`doc.detector.${data.detector}`)}`;
     renderLegend(data.counts);
     renderSegments(parts.original, data.original, false);
     renderSegments(parts.masked, data.masked, true);

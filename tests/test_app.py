@@ -10,6 +10,7 @@ def make_settings(**overrides) -> Settings:
         gemini_api_key="",
         gemini_model="test-model",
         gemini_embed_model="test-embed",
+        ner_model_dir="",  # tests never depend on the local model files
         session_ttl_seconds=60,
         max_sessions=10,
         max_upload_bytes=10 * 1024 * 1024,

@@ -32,6 +32,7 @@ class Session:
     id: str
     last_used: float
     filename: str = ""
+    detector_model: bool = False  # names were found with the trained model (shown in the UI)
     text: str = ""
     entities: list[Entity] = field(default_factory=list)
     excluded: set[str] = field(default_factory=set)  # tokens the user marked as wrong (all mentions)

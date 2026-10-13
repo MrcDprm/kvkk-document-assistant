@@ -144,7 +144,7 @@ def build_prompt(question: str, excerpts: list[tuple[int, str]], lang: str) -> t
     return SYSTEM_PROMPTS[lang], f"{body}\n\n--- {asked} ---\n{question}"
 
 
-async def ask(session: Session, question: str, llm: LLM, lang: str) -> dict:
+async def ask(session: Session, question: str, llm: LLM, lang: str, ner=None) -> dict:
     question = " ".join(question.split())
     if not question:
         raise AskError("empty")
@@ -156,7 +156,7 @@ async def ask(session: Session, question: str, llm: LLM, lang: str) -> dict:
 
     async with session.lock:  # two questions at once must not build the index twice
         p = session.pseudonymizer
-        found = detect(question, known=session.entities)
+        found = detect(question, known=session.entities, ner=ner)
         masked_question = p.mask(question, _active_entities(session, found)).text
         await _ensure_index(session, llm)
         chunks, vectors = session.index

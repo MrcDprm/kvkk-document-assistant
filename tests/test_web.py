@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 from app.main import create_app
 from app.web import SESSION_COOKIE
 from tests.fake_llm import FakeLLM
+from tests.test_ner import FakeNer
 from tests.test_app import make_settings
 
 SAMPLE = "Kiracı Ayşe Yılmaz (T.C. 10000000146), Tel: 0532 123 45 67. Ödeme her ayın 5'inde yapılır."
@@ -332,3 +333,29 @@ def test_ask_rate_limit(ask_client):
     analyze_text(ask_client)
     ask_client.post("/api/ask", json={"question": "a?"})
     assert ask_client.post("/api/ask", json={"question": "b?"}).json() == {"error": "rate_limited"}
+
+
+# --- Trained name model ---
+
+
+def test_analysis_uses_the_model_and_says_so():
+    client = TestClient(create_app(make_settings(), ner=FakeNer(PER=["Tayyar Gündoğdu"])))
+    analyze_text(client, "Tayyar Gündoğdu imzaladı.")
+    data = client.get("/api/document").json()
+    assert data["detector"] == "model"
+    assert [f["text"] for f in data["findings"]] == ["Tayyar Gündoğdu"]
+
+
+def test_rules_only_without_model(client):
+    analyze_text(client)
+    assert client.get("/api/document").json()["detector"] == "rules"
+    assert client.app.state.ner is None
+
+
+def test_question_is_masked_with_the_model_too():
+    llm = FakeLLM()
+    # "Cebrail Tuzcuoğlu" is not in the document; only the model can find it in the question.
+    client = TestClient(create_app(make_settings(), llm=llm, ner=FakeNer(PER=["Cebrail Tuzcuoğlu"])))
+    analyze_text(client)
+    client.post("/api/ask", json={"question": "Cebrail Tuzcuoğlu kim?"})
+    assert "Cebrail" not in llm.sent_texts()

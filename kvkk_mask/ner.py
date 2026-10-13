@@ -104,6 +104,9 @@ class NerModel:
         found: list[Span] = []
         start = kind = None
         for i, tag in enumerate(tags + ["O"]):
+            # A name never continues onto the next line ("Kezban Çetin", then "T.C. Kimlik No").
+            if 0 < i < len(words) and "\n" in text[words[i - 1][2]:words[i][1]] and tag.startswith("I-"):
+                tag = "B-" + tag[2:]
             if start is not None and not (tag.startswith("I-") and tag[2:] == kind):
                 first, last = start, i - 1
                 if kind == "PER":

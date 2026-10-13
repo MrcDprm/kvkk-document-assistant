@@ -16,6 +16,7 @@ from app.llm import LLM, GeminiLLM
 from app.ratelimit import RateLimiter
 from app.store import SessionStore
 from app.web import render, router
+from kvkk_mask.ner import NerModel
 
 logger = logging.getLogger("kvkk")
 
@@ -90,8 +91,9 @@ class BodySizeLimit:
         await response(scope, receive, send)
 
 
-def create_app(settings: Settings | None = None, llm: LLM | None = None) -> FastAPI:
-    """`llm` lets tests pass a fake model; without a key, asking questions is turned off."""
+def create_app(settings: Settings | None = None, llm: LLM | None = None, ner=None) -> FastAPI:
+    """`llm` and `ner` let tests pass fakes. Without a key, asking questions is turned off;
+    without the model files, names are found by the rules alone."""
     settings = settings or load_settings()
     # The interactive API docs are not needed in production.
     app = FastAPI(title="KVKK Document Assistant", docs_url=None, redoc_url=None, openapi_url=None)
@@ -101,6 +103,10 @@ def create_app(settings: Settings | None = None, llm: LLM | None = None) -> Fast
     if llm is None and settings.gemini_api_key:
         llm = GeminiLLM(settings.gemini_api_key, settings.gemini_model, settings.gemini_embed_model)
     app.state.llm = llm
+    if ner is None and settings.ner_model_dir and NerModel.available(settings.ner_model_dir):
+        ner = NerModel(settings.ner_model_dir)
+        logger.info("NER model loaded from %s", settings.ner_model_dir)
+    app.state.ner = ner
 
     app.include_router(router)
     app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")

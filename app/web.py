@@ -6,6 +6,7 @@ from pathlib import Path
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
+from starlette.concurrency import run_in_threadpool
 from starlette.datastructures import UploadFile
 
 from app.extract import ExtractError, extract_text, normalize_text
@@ -82,7 +83,9 @@ async def analyze(request: Request) -> Response:
     session = store.create()
     session.filename = filename
     session.text = text
-    session.entities = detect(text)
+    session.detector_model = request.app.state.ner is not None
+    # The model is CPU-heavy: run it in a worker thread so other requests are still served.
+    session.entities = await run_in_threadpool(detect, text, None, request.app.state.ner)
     session.pseudonymizer.mask(text, session.entities)  # assign tokens in document order
 
     response = RedirectResponse("/document", status_code=303)
@@ -178,6 +181,7 @@ def document_payload(session: Session) -> dict:
         "filename": session.filename,
         "chars": len(text),
         "masked_count": sum(counts.values()),
+        "detector": "model" if session.detector_model else "rules",
         "counts": counts,
         "findings": list(findings.values()),
         "original": original,
@@ -234,7 +238,7 @@ async def api_ask(request: Request) -> Response:
     if not isinstance(question, str):
         return JSONResponse({"error": "empty"}, status_code=400)
     try:
-        result = await ask(session, question, llm, get_lang(request))
+        result = await ask(session, question, llm, get_lang(request), ner=request.app.state.ner)
     except (AskError, LLMError) as e:
         return JSONResponse({"error": e.code}, status_code=_ASK_STATUS.get(e.code, 400))
     return JSONResponse(result)
