@@ -1,6 +1,6 @@
 # Render Blueprint: creates the web service from the Dockerfile.
-# No database: documents live only in memory. The only secret is the Gemini API key,
-# entered in the Render dashboard (sync: false keeps it out of this file).
+# No database: documents live only in memory. The secrets are the Groq and Gemini API keys,
+# entered in the Render dashboard (sync: false keeps them out of this file).
 services:
   - type: web
     name: kvkk-document-assistant
@@ -11,6 +11,8 @@ services:
     healthCheckPath: /healthz
     autoDeploy: true
     envVars:
+      - key: GROQ_API_KEY
+        sync: false
       - key: GEMINI_API_KEY
         sync: false
       - key: ALLOWED_HOSTS
