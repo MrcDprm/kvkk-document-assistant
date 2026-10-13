@@ -152,3 +152,14 @@ def test_question_limit_per_session():
     with pytest.raises(AskError) as info:
         run(ask(session, "Kira?", FakeLLM(), "tr"))
     assert info.value.code == "limit"
+
+
+def test_rare_name_in_lowercase_question_is_masked():
+    # "Ümmühan" is not in the name dictionary; the document found it only thanks to the
+    # "Adı Soyadı:" label. The question has no label and is typed in lower case.
+    session = make_session("Adı Soyadı: Ümmühan Çelik\nCep Telefonu: 0532 123 45 67")
+    llm = FakeLLM()
+    run(ask(session, "ümmühan çelik in telefon numarası ne", llm, "tr"))
+    sent = llm.sent_texts().lower()
+    assert "ümmühan" not in sent and "çelik" not in sent
+    assert "[KISI_1] in telefon numarası ne" in llm.sent_texts()

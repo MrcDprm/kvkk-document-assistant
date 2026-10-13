@@ -156,7 +156,8 @@ async def ask(session: Session, question: str, llm: LLM, lang: str) -> dict:
 
     async with session.lock:  # two questions at once must not build the index twice
         p = session.pseudonymizer
-        masked_question = p.mask(question, _active_entities(session, detect(question))).text
+        found = detect(question, known=session.entities)
+        masked_question = p.mask(question, _active_entities(session, found)).text
         await _ensure_index(session, llm)
         chunks, vectors = session.index
 
