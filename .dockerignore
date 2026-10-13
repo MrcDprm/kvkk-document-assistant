@@ -1,0 +1,13 @@
+# Only requirements.txt, scripts/, kvkk_mask/ and app/ are needed in the image.
+.git
+.venv
+.env
+.env.*
+models
+tests
+eval
+training
+docs
+**/__pycache__
+.pytest_cache
+*.md

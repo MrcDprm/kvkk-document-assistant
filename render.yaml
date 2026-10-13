@@ -1,0 +1,17 @@
+# Render Blueprint: creates the web service from the Dockerfile.
+# No database: documents live only in memory. The only secret is the Gemini API key,
+# entered in the Render dashboard (sync: false keeps it out of this file).
+services:
+  - type: web
+    name: kvkk-document-assistant
+    runtime: docker
+    plan: free
+    region: frankfurt
+    branch: main
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: ALLOWED_HOSTS
+        value: "kvkk.miracdeprem.com,kvkk-document-assistant.onrender.com"
