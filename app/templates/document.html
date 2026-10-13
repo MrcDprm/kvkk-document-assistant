@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('doc.title') }} · {{ t('app.short') }}{% endblock %}
+
+{% block content %}
+{# UI texts for app.js. A JSON block is data, not a script, so the CSP still allows it. #}
+<script type="application/json" id="i18n">{{ js_texts | tojson }}</script>
+
+<section class="container doc" data-document>
+  <div class="doc__bar">
+    <div>
+      <p class="doc__file" data-filename></p>
+      <h1 class="doc__title">{{ t('doc.title') }}</h1>
+      <p class="doc__summary" data-summary aria-live="polite">{{ t('doc.loading') }}</p>
+    </div>
+    <form action="/reset" method="post">
+      <button class="btn btn--ghost" type="submit">{{ t('doc.new') }}</button>
+    </form>
+  </div>
+
+  <ul class="legend" data-legend></ul>
+
+  <div class="compare">
+    <article class="sheet paper">
+      <header class="paper__head">
+        <h2>{{ t('doc.original') }}</h2>
+        <p class="hint">{{ t('doc.original.hint') }}</p>
+      </header>
+      <div class="paper__body" data-original></div>
+    </article>
+    <article class="sheet paper paper--masked">
+      <header class="paper__head">
+        <h2>{{ t('doc.masked') }}</h2>
+        <p class="hint">{{ t('doc.masked.hint') }}</p>
+      </header>
+      <div class="paper__body" data-masked></div>
+    </article>
+  </div>
+
+  <section class="sheet findings">
+    <h2 class="sheet__title">{{ t('doc.findings') }}</h2>
+    <p class="hint">{{ t('doc.findings.hint') }}</p>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">{{ t('doc.col.type') }}</th>
+            <th scope="col">{{ t('doc.col.value') }}</th>
+            <th scope="col">{{ t('doc.col.token') }}</th>
+            <th scope="col"><span class="visually-hidden">{{ t('doc.col.action') }}</span></th>
+          </tr>
+        </thead>
+        <tbody data-findings></tbody>
+      </table>
+    </div>
+  </section>
+</section>
+{% endblock %}

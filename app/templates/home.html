@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% set mode = mode or 'file' %}
+<section class="hero container">
+  <p class="eyebrow">{{ t('home.eyebrow') }}</p>
+  <h1 class="hero__title">{{ t('home.title') }}</h1>
+  <p class="hero__lead">{{ t('home.lead') }}</p>
+
+  <ol class="clauses">
+    {% for n in [1, 2, 3] %}
+    <li class="clause">
+      <span class="clause__num">§ {{ n }}</span>
+      <h2 class="clause__title">{{ t('home.step%d.title' % n) }}</h2>
+      <p>{{ t('home.step%d.text' % n) }}</p>
+    </li>
+    {% endfor %}
+  </ol>
+</section>
+
+<section class="container">
+  <form class="sheet intake" action="/analyze" method="post" enctype="multipart/form-data">
+    <h2 class="sheet__title">{{ t('form.title') }}</h2>
+
+    {% if error %}
+    <p class="alert" role="alert">{{ t('error.' ~ error) }}</p>
+    {% endif %}
+
+    {# Tabs are radio buttons, so they work without JavaScript. #}
+    <div class="tabs">
+      <input class="tabs__radio" type="radio" name="mode" id="mode-file" value="file" {% if mode == 'file' %}checked{% endif %}>
+      <input class="tabs__radio" type="radio" name="mode" id="mode-text" value="text" {% if mode == 'text' %}checked{% endif %}>
+      <input class="tabs__radio" type="radio" name="mode" id="mode-demo" value="demo" {% if mode == 'demo' %}checked{% endif %}>
+
+      <div class="tabs__list">
+        <label class="tabs__tab" for="mode-file">{{ t('form.tab.file') }}</label>
+        <label class="tabs__tab" for="mode-text">{{ t('form.tab.text') }}</label>
+        <label class="tabs__tab" for="mode-demo">{{ t('form.tab.demo') }}</label>
+      </div>
+
+      <div class="tabs__panel tabs__panel--file">
+        <label class="dropzone" for="file">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0-4 4m4-4 4 4M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="dropzone__label">{{ t('form.file.label') }}</span>
+          <span class="dropzone__file" data-file-name></span>
+          <span class="hint">{{ t('form.file.hint') }}</span>
+        </label>
+        <input class="visually-hidden" type="file" id="file" name="file" accept=".txt,.pdf,.docx,text/plain,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+      </div>
+
+      <div class="tabs__panel tabs__panel--text">
+        <label class="field-label" for="text">{{ t('form.text.label') }}</label>
+        <textarea id="text" name="text" rows="10" maxlength="200000" placeholder="{{ t('form.text.placeholder') }}">{{ pasted or '' }}</textarea>
+      </div>
+
+      <div class="tabs__panel tabs__panel--demo">
+        <label class="field-label" for="demo">{{ t('form.demo.label') }}</label>
+        <select id="demo" name="demo">
+          {% for kind in demo_kinds %}
+          <option value="{{ kind }}">{{ t('form.demo.' ~ kind) }}</option>
+          {% endfor %}
+        </select>
+        <p class="hint">{{ t('form.demo.hint') }}</p>
+      </div>
+    </div>
+
+    <div class="intake__footer">
+      <p class="seal">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 11V8a5 5 0 0 1 10 0v3M6 11h12v9H6z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        {{ t('form.privacy') }}
+      </p>
+      <button class="btn btn--primary" type="submit">{{ t('form.submit') }}</button>
+    </div>
+  </form>
+</section>
+{% endblock %}

@@ -33,7 +33,7 @@ class Session:
     filename: str = ""
     text: str = ""
     entities: list[Entity] = field(default_factory=list)
-    excluded: set[int] = field(default_factory=set)  # indexes into `entities` the user marked as wrong
+    excluded: set[str] = field(default_factory=set)  # tokens the user marked as wrong (all mentions)
     pseudonymizer: Pseudonymizer = field(default_factory=Pseudonymizer)
     audit: list[AuditEntry] = field(default_factory=list)
 

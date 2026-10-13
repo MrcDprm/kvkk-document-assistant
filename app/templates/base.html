@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="{{ lang }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ t('app.name') }}{% endblock %}</title>
+  <meta name="description" content="{{ t('meta.description') }}">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="{{ url_for('static', path='favicon.svg') }}" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="{{ url_for('static', path='apple-touch-icon.png') }}">
+  <link rel="stylesheet" href="{{ url_for('static', path='style.css') }}">
+  {# Runs before the page is painted so the saved theme is applied without a flash. #}
+  <script src="{{ url_for('static', path='theme.js') }}"></script>
+  <script src="{{ url_for('static', path='app.js') }}" defer></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container site-header__inner">
+      <a class="brand" href="/">
+        <svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true">
+          <rect width="64" height="64" rx="14" fill="currentColor"/>
+          <path d="M20 14h18l8 8v28H20z" fill="none" stroke="#f6f4ef" stroke-width="3.5" stroke-linejoin="round"/>
+          <path d="M38 14v8h8" fill="none" stroke="#f6f4ef" stroke-width="3.5" stroke-linejoin="round"/>
+          <path d="M25 30h16M25 37h10M25 44h14" stroke="#c9a45c" stroke-width="5" stroke-linecap="round"/>
+        </svg>
+        <span class="brand__name">{{ t('app.name') }}</span>
+      </a>
+      <nav class="header-actions" aria-label="{{ t('nav.lang') }}">
+        <span class="lang-switch">
+          <a href="/lang/tr?next={{ request.url.path }}" {% if lang == 'tr' %}aria-current="true"{% endif %} lang="tr">TR</a>
+          <a href="/lang/en?next={{ request.url.path }}" {% if lang == 'en' %}aria-current="true"{% endif %} lang="en">EN</a>
+        </span>
+        <button class="icon-btn" type="button" data-theme-toggle aria-label="{{ t('nav.theme') }}" title="{{ t('nav.theme') }}">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="container site-footer__inner">
+      <p class="site-footer__note">{{ t('footer.note') }}</p>
+      {# Every live project links to the others; the current one is highlighted. #}
+      <nav class="footer-projects" aria-label="{{ t('footer.projects') }}">
+        <a href="https://kvkk.miracdeprem.com" aria-current="page">KVKK Assistant</a>
+        <a href="https://crypto.miracdeprem.com">Crypto Toolkit</a>
+        <a href="https://sahaf.miracdeprem.com">Sahaf</a>
+        <a href="https://tictactoe.miracdeprem.com">Tic-Tac-Toe</a>
+        <a href="https://hangman.miracdeprem.com">Hangman</a>
+        <a href="https://quiz.miracdeprem.com">Quiz App</a>
+        <a href="https://weather.miracdeprem.com">Weather App</a>
+      </nav>
+      <div class="footer-meta">
+        <span>© 2026 Miraç Deprem</span>
+        <a href="https://www.miracdeprem.com">{{ t('footer.portfolio') }}</a>
+        <a href="https://github.com/MrcDprm/kvkk-document-assistant">{{ t('footer.source') }}</a>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
