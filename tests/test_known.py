@@ -57,18 +57,31 @@ def test_suffix_limit_keeps_longer_words():
     assert masked_question("Ümmühan Çelikhanelerinden") == "Ümmühan Çelikhanelerinden".replace("Ümmühan", "[KISI_1]")
 
 
-def test_unique_name_part_when_capitalized():
-    assert masked_question("Çelik'in telefonu ne?") == "[KISI_1]'in telefonu ne?"
-    assert masked_question("Ümmühan nerede?") == "[KISI_1] nerede?"
+@pytest.mark.parametrize(
+    "question, expected",
+    [
+        ("Çelik'in telefonu ne?", "[KISI_1]'in telefonu ne?"),
+        ("Ümmühan nerede?", "[KISI_1] nerede?"),
+        ("ümmühan'ın telefonu ne", "[KISI_1]'ın telefonu ne"),
+        ("ümmühanın telefonu", "[KISI_1]ın telefonu"),
+        ("ümmühan hanım kim", "[KISI_1] hanım kim"),
+        ("ayşe hanımın numarası", "[KISI_2] hanımın numarası"),
+    ],
+)
+def test_single_name_part_in_any_case(question, expected):
+    assert masked_question(question) == expected
 
 
-def test_lowercase_part_is_an_ordinary_word():
-    assert masked_question("çelik kapı ne kadar?") == "çelik kapı ne kadar?"
+def test_ordinary_word_equal_to_a_name_is_masked_too():
+    # Privacy first: masking "çelik" here is harmless, missing a name is not.
+    assert masked_question("çelik kapı ne kadar?") == "[KISI_1] kapı ne kadar?"
 
 
-def test_shared_surname_is_ambiguous():
-    # Two people are called Kaya, so "Kaya" alone is not linked to either of them.
-    assert masked_question("Kaya'nın telefonu ne?") == "Kaya'nın telefonu ne?"
+def test_shared_surname_gets_its_own_token():
+    # Two people are called Kaya: "Kaya" alone is masked but linked to neither of them.
+    masked = masked_question("Kaya'nın telefonu ne?")
+    assert "kaya" not in masked.lower()
+    assert not masked.startswith(("[KISI_2]", "[KISI_3]"))
     assert masked_question("ayşe kaya nerede?") == "[KISI_2] nerede?"
 
 
@@ -85,8 +98,9 @@ def test_numbers_typed_differently(question, expected):
 
 
 def test_returns_document_spelling_for_the_token():
-    [entity] = find_known("ummuhan celik", KNOWN)
-    assert entity.text == "Ümmühan Çelik"
+    found = find_known("ummuhan celik", KNOWN)
+    longest = max(found, key=lambda e: e.end - e.start)  # the parts also match; overlaps are resolved later
+    assert (longest.start, longest.end, longest.text) == (0, 13, "Ümmühan Çelik")
 
 
 # --- Systematic check: no spelling of a document name reaches the model ---
@@ -126,9 +140,13 @@ def test_no_spelling_of_a_document_name_is_sent_unmasked():
         p.mask(doc.text, known)
         for person in people:
             first = fold(person.split()[0])
-            for spelling in set(_spellings(person)):
+            parts = [w for w in person.split() if len(w) >= 3]
+            spellings = set(_spellings(person))
+            for part in parts:
+                spellings |= set(_spellings(part))
+            for spelling in spellings:
                 question = f"{spelling} telefon numarası nedir?"
                 masked = p.mask(question, detect(question, known=known)).text
-                if first in fold(masked):
+                if any(fold(w) in fold(masked) for w in parts):
                     leaks.append((person, question, masked))
     assert leaks == []

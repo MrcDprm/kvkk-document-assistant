@@ -61,8 +61,10 @@ def find_known(text: str, known: list[Entity]) -> list[Entity]:
         for m in re.finditer(_pattern(value, entity_type), folded):
             found.append(Entity(entity_type, m.start(), m.end(), value))
 
-    # A single name part ("Çelik'in") counts only if it is capitalized in the text and
-    # belongs to exactly one person in the document; otherwise it is ambiguous.
+    # A single name part ("gülfem'in", "Çelik'e") is masked too, in any case: for a privacy
+    # tool masking an ordinary word ("çelik kapı") is a much smaller mistake than leaking a name.
+    # A part that belongs to one person gets that person's token; a part shared by several
+    # people ("Kaya") gets a token of its own, because it is not clear who is meant.
     owners: dict[str, set[str]] = {}
     for e in known:
         if e.type is EntityType.KISI:
@@ -71,10 +73,7 @@ def find_known(text: str, known: list[Entity]) -> list[Entity]:
                     owners.setdefault(part, set()).add(fold(e.text))
     full_names = {fold(e.text): e.text for e in known if e.type is EntityType.KISI}
     for part, people in owners.items():
-        if len(people) != 1:
-            continue
-        value = full_names[next(iter(people))]
+        value = full_names[next(iter(people))] if len(people) == 1 else part
         for m in re.finditer(rf"(?<!\w){_name_word(part, True)}{_NAME_END}", folded):
-            if text[m.start()].isupper():
-                found.append(Entity(EntityType.KISI, m.start(), m.end(), value))
+            found.append(Entity(EntityType.KISI, m.start(), m.end(), value))
     return found
