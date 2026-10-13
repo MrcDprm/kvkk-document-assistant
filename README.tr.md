@@ -7,7 +7,7 @@ Türkçe kişisel veri içeren belgeler hakkında LLM'e soru sorun, ama bu veriy
 > Taslak: geliştirme sürüyor.
 
 ## Özellikler (MVP planı)
-- `.txt`, `.pdf` veya `.docx` yükleme (en fazla 2 MB) ya da metin yapıştırma
+- `.txt`, `.pdf` veya `.docx` yükleme (en fazla 10 MB, yaklaşık 100 sayfa metin) ya da metin yapıştırma
 - Doğrulamalı Türkçe tanıyıcılar: TCKN ve VKN (sağlama hanesi), IBAN (mod-97), kart numarası (Luhn), telefon, e-posta, plaka, ad-soyad
 - Tutarlı takma adlarla önce/sonra görünümü (`[KISI_1]`); yanlış bulunan öğeyi tek tıkla çıkarma
 - Belgeye soru sorma: maskeli parçalarda arama, kaynak gösteren cevap, takma adların yerelde geri konması

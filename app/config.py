@@ -15,6 +15,7 @@ class Settings:
     session_ttl_seconds: int
     max_sessions: int
     max_upload_bytes: int
+    max_text_chars: int
     cookie_secure: bool
 
 
@@ -23,7 +24,9 @@ def load_settings() -> Settings:
         gemini_api_key=os.environ.get("GEMINI_API_KEY", ""),
         session_ttl_seconds=_int("SESSION_TTL_SECONDS", 30 * 60),
         max_sessions=_int("MAX_SESSIONS", 200),
-        max_upload_bytes=_int("MAX_UPLOAD_BYTES", 2 * 1024 * 1024),
+        max_upload_bytes=_int("MAX_UPLOAD_BYTES", 10 * 1024 * 1024),
+        # The real cost limit: ~80-100 pages of text (memory per session and embedding requests).
+        max_text_chars=_int("MAX_TEXT_CHARS", 200_000),
         # Local development over plain http needs COOKIE_SECURE=0.
         cookie_secure=os.environ.get("COOKIE_SECURE", "1") != "0",
     )

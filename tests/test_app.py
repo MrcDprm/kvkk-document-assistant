@@ -10,7 +10,8 @@ def make_settings(**overrides) -> Settings:
         gemini_api_key="",
         session_ttl_seconds=60,
         max_sessions=10,
-        max_upload_bytes=2 * 1024 * 1024,
+        max_upload_bytes=10 * 1024 * 1024,
+        max_text_chars=200_000,
         cookie_secure=False,
     )
     values.update(overrides)
