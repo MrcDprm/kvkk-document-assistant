@@ -13,6 +13,17 @@ from kvkk_mask.recognizers import Entity, EntityType
 
 _ASCII = str.maketrans("çğıöşüâîû", "cgiosuaiu")
 _MIN_PART = 3  # shorter name parts ("Su", "Ay") are too likely to be ordinary words
+# Turkish case endings are often typed without an apostrophe ("gülfem kurtun", "çelike").
+# After a name, up to 5 more letters are allowed; they stay in the text after the token.
+_NAME_END = r"(?=[a-z]{0,5}(?![\w]))"
+# Before a vowel ending the last consonant softens: Çelik -> Çeliğe, Kurt -> Kurda, Kalp -> Kalbi.
+_SOFTENING = {"k": "[kg]", "t": "[td]", "p": "[pb]"}
+
+
+def _name_word(word: str, last: bool) -> str:
+    if last and len(word) > 2 and word[-1] in _SOFTENING:
+        return re.escape(word[:-1]) + _SOFTENING[word[-1]]
+    return re.escape(word)
 
 
 def fold(text: str) -> str:
@@ -27,10 +38,11 @@ def fold(text: str) -> str:
 def _pattern(value: str, entity_type: EntityType) -> str:
     folded = fold(value)
     if entity_type is EntityType.KISI:
-        body = r"\s+".join(re.escape(w) for w in folded.split())
-    else:
-        # Numbers, IBANs and plates may be typed with or without spaces/dashes.
-        body = r"[\s-]*".join(re.escape(c) for c in folded if not c.isspace() and c != "-")
+        words = folded.split()
+        body = r"\s+".join(_name_word(w, i == len(words) - 1) for i, w in enumerate(words))
+        return r"(?<!\w)" + body + _NAME_END
+    # Numbers, IBANs and plates may be typed with or without spaces/dashes.
+    body = r"[\s-]*".join(re.escape(c) for c in folded if not c.isspace() and c != "-")
     return rf"(?<!\w){body}(?!\w)"
 
 
@@ -62,7 +74,7 @@ def find_known(text: str, known: list[Entity]) -> list[Entity]:
         if len(people) != 1:
             continue
         value = full_names[next(iter(people))]
-        for m in re.finditer(rf"(?<!\w){re.escape(part)}(?!\w)", folded):
+        for m in re.finditer(rf"(?<!\w){_name_word(part, True)}{_NAME_END}", folded):
             if text[m.start()].isupper():
                 found.append(Entity(EntityType.KISI, m.start(), m.end(), value))
     return found

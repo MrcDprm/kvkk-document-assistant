@@ -40,6 +40,23 @@ def test_full_name_in_any_spelling(question):
     assert "mmuhan" not in masked_question(question).lower()
 
 
+@pytest.mark.parametrize(
+    "question, expected",
+    [
+        ("ümmühan çelikin telefonu ne", "[KISI_1]in telefonu ne"),
+        ("ummuhan celige ne gönderildi", "[KISI_1]e ne gönderildi"),  # k -> ğ before a vowel
+        ("Ümmühan Çelikten haber var mı", "[KISI_1]ten haber var mı"),
+        ("Ayşe Kayayla görüştüm", "[KISI_2]yla görüştüm"),
+    ],
+)
+def test_suffix_attached_without_apostrophe(question, expected):
+    assert masked_question(question) == expected
+
+
+def test_suffix_limit_keeps_longer_words():
+    assert masked_question("Ümmühan Çelikhanelerinden") == "Ümmühan Çelikhanelerinden".replace("Ümmühan", "[KISI_1]")
+
+
 def test_unique_name_part_when_capitalized():
     assert masked_question("Çelik'in telefonu ne?") == "[KISI_1]'in telefonu ne?"
     assert masked_question("Ümmühan nerede?") == "[KISI_1] nerede?"
@@ -70,3 +87,48 @@ def test_numbers_typed_differently(question, expected):
 def test_returns_document_spelling_for_the_token():
     [entity] = find_known("ummuhan celik", KNOWN)
     assert entity.text == "Ümmühan Çelik"
+
+
+# --- Systematic check: no spelling of a document name reaches the model ---
+
+from kvkk_mask.fakegen import make_documents  # noqa: E402
+from kvkk_mask.names import tr_capitalize, tr_lower  # noqa: E402
+from kvkk_mask.recognizers import EntityType  # noqa: E402
+
+_SUFFIXES = ["", "'in", "'un", "in", "un", "ın", "nin", "e", "a", "ye", "ya", "yla", "le", "den", "dan", "ten", "tan", "de", "da"]
+_SOFT = {"k": "ğ", "t": "d", "p": "b"}
+
+
+def _spellings(name: str):
+    first, *rest = name.split()
+    last = rest[-1] if rest else first
+    stems = [name]
+    if last[-1].lower() in _SOFT:  # Çelik + e -> Çeliğe
+        stems.append(name[:-1] + _SOFT[last[-1].lower()])
+    for stem in stems:
+        for suffix in _SUFFIXES:
+            if stem != name and (not suffix or suffix[0] not in "aeıiouöü"):
+                continue  # the softened stem only appears before a vowel
+            base = stem + suffix
+            yield base
+            yield tr_lower(base)
+            yield tr_lower(base).upper()
+            yield fold(base)
+            yield " ".join(tr_capitalize(w) for w in tr_lower(base).split())
+
+
+def test_no_spelling_of_a_document_name_is_sent_unmasked():
+    leaks = []
+    for doc in make_documents(60, seed=11):
+        known = detect(doc.text)
+        people = {e.text for e in known if e.type is EntityType.KISI}
+        p = Pseudonymizer()
+        p.mask(doc.text, known)
+        for person in people:
+            first = fold(person.split()[0])
+            for spelling in set(_spellings(person)):
+                question = f"{spelling} telefon numarası nedir?"
+                masked = p.mask(question, detect(question, known=known)).text
+                if first in fold(masked):
+                    leaks.append((person, question, masked))
+    assert leaks == []
