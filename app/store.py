@@ -25,6 +25,7 @@ class AuditEntry:
     input_tokens: int | None  # embedding responses do not report token counts
     output_tokens: int | None
     latency_ms: int
+    model: str = ""  # which model answered (the chain may fall back to another one)
 
 
 @dataclass

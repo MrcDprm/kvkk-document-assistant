@@ -258,6 +258,7 @@ def api_audit(request: Request) -> Response:
             "input_tokens": a.input_tokens,
             "output_tokens": a.output_tokens,
             "latency_ms": a.latency_ms,
+            "model": a.model,
         }
         for a in reversed(session.audit)  # newest first
     ]

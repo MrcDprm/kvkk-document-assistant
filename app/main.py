@@ -13,7 +13,7 @@ from starlette.formparsers import MultiPartParser
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 from app.config import Settings, load_settings
-from app.llm import LLM, GeminiLLM
+from app.llm import LLM, ChainLLM, GeminiLLM, GroqLLM
 from app.ratelimit import RateLimiter
 from app.store import SessionStore
 from app.web import render, router
@@ -92,6 +92,20 @@ class BodySizeLimit:
         await response(scope, receive, send)
 
 
+def build_llm(settings: Settings) -> LLM | None:
+    """Groq first (fast, larger free quota), then the Gemini models; None if no key is set."""
+    generators = []
+    if settings.groq_api_key:
+        generators.append(GroqLLM(settings.groq_api_key, settings.groq_model))
+    gemini = []
+    if settings.gemini_api_key:
+        gemini = [GeminiLLM(settings.gemini_api_key, m, settings.gemini_embed_model) for m in settings.gemini_models]
+        generators += gemini
+    if not generators:
+        return None
+    return ChainLLM(generators, embedder=gemini[0] if gemini else None)
+
+
 def create_app(settings: Settings | None = None, llm: LLM | None = None, ner=None) -> FastAPI:
     """`llm` and `ner` let tests pass fakes. Without a key, asking questions is turned off;
     without the model files, names are found by the rules alone."""
@@ -101,8 +115,8 @@ def create_app(settings: Settings | None = None, llm: LLM | None = None, ner=Non
     app.state.settings = settings
     app.state.store = SessionStore(settings.session_ttl_seconds, settings.max_sessions)
     app.state.limiter = RateLimiter(RATE_LIMITS)
-    if llm is None and settings.gemini_api_key:
-        llm = GeminiLLM(settings.gemini_api_key, settings.gemini_model, settings.gemini_embed_model)
+    if llm is None:
+        llm = build_llm(settings)
     app.state.llm = llm
     if ner is None and settings.ner_model_dir and NerModel.available(settings.ner_model_dir):
         ner = NerModel(settings.ner_model_dir, threads=settings.ner_threads)

@@ -173,7 +173,7 @@ async def ask(session: Session, question: str, llm: LLM, lang: str, ner=None) ->
         system, prompt = build_prompt(masked_question, excerpts, lang)
         result = await llm.generate(system, prompt)
         session.audit.append(
-            AuditEntry("answer", f"{system}\n\n{prompt}", result.input_tokens, result.output_tokens, result.latency_ms)
+            AuditEntry("answer", f"{system}\n\n{prompt}", result.input_tokens, result.output_tokens, result.latency_ms, result.model)
         )
 
     return {
@@ -186,5 +186,6 @@ async def ask(session: Session, question: str, llm: LLM, lang: str, ner=None) ->
             "input_tokens": result.input_tokens,
             "output_tokens": result.output_tokens,
             "latency_ms": result.latency_ms,
+            "model": result.model,
         },
     }

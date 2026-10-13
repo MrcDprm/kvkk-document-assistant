@@ -92,7 +92,7 @@ def test_answer_is_unmasked_on_the_server():
     assert result["answer_masked"] == "[KISI_1] kiraya verendir [1]."
     assert result["sources"][0]["n"] == 1
     assert "Ayşe Yılmaz" in result["sources"][0]["text"]
-    assert result["usage"] == {"input_tokens": 120, "output_tokens": 12, "latency_ms": 5}
+    assert result["usage"] == {"input_tokens": 120, "output_tokens": 12, "latency_ms": 5, "model": ""}
 
 
 def test_short_document_is_sent_whole_without_embeddings():

@@ -8,8 +8,10 @@ from app.main import create_app
 def make_settings(**overrides) -> Settings:
     values = dict(
         gemini_api_key="",
-        gemini_model="test-model",
+        gemini_models=["test-model"],
         gemini_embed_model="test-embed",
+        groq_api_key="",
+        groq_model="test-groq",
         ner_model_dir="",  # tests never depend on the local model files
         ner_threads=1,
         allowed_hosts=["testserver"],

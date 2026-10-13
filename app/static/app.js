@@ -205,6 +205,7 @@ function setupDocument() {
       const meta = [t("audit.chars", { count: a.chars.toLocaleString(lang) })];
       if (a.input_tokens !== null) meta.push(t("audit.tokens", { input: a.input_tokens, output: a.output_tokens }));
       meta.push(t("audit.ms", { ms: a.latency_ms }));
+      if (a.model) meta.push(a.model);
       summary.append(el("span", "audit__kind", t(`audit.kind.${a.kind}`)), el("span", "audit__meta", meta.join(" · ")));
       details.append(summary, el("pre", "audit__sent", a.sent_text));
       item.append(details);
@@ -236,9 +237,8 @@ function setupDocument() {
   function addAnswer(item, data) {
     item.querySelector(".qa__text").textContent = data.answer;
     const seconds = (data.usage.latency_ms / 1000).toLocaleString(lang, { maximumFractionDigits: 1 });
-    item.append(el("p", "qa__meta", t("ask.meta", {
-      input: data.usage.input_tokens, output: data.usage.output_tokens, seconds,
-    })));
+    const meta = t("ask.meta", { input: data.usage.input_tokens, output: data.usage.output_tokens, seconds });
+    item.append(el("p", "qa__meta", data.usage.model ? `${meta} · ${data.usage.model}` : meta));
 
     const sources = el("details", "qa__details");
     sources.append(el("summary", "", `${t("ask.sources")} (${data.sources.length})`));
