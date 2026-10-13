@@ -12,10 +12,14 @@ from dataclasses import dataclass
 
 from kvkk_mask.names import tr_lower
 from kvkk_mask.recognizers import Entity, EntityType
+from kvkk_mask.suffix import harmonize
 from kvkk_mask.validators import normalize_digits
 
 # LLMs sometimes drop the brackets ("KISI_1"), so they are optional when restoring.
-_TOKEN_IN_TEXT = re.compile(r"\[?\b(" + "|".join(t.value for t in EntityType) + r")_(\d+)\b\]?")
+_TOKEN_IN_TEXT = re.compile(
+    r"\[?\b(" + "|".join(t.value for t in EntityType) + r")_(\d+)\b\]?"
+    r"(?:(?P<apostrophe>['’])(?P<suffix>[a-zçğıöşü]+))?"  # a case ending after a name: [KISI_1]'in
+)
 
 
 @dataclass(frozen=True)
@@ -87,7 +91,15 @@ class Pseudonymizer:
         """Put the original values back. Unknown tokens are left as they are."""
 
         def restore(m: re.Match) -> str:
-            return self._original_by_token.get(f"[{m.group(1)}_{m.group(2)}]", m.group())
+            original = self._original_by_token.get(f"[{m.group(1)}_{m.group(2)}]")
+            if original is None:
+                return m.group()
+            suffix = m.group("suffix")
+            if not suffix:
+                return original
+            if m.group(1) == EntityType.KISI.value:
+                suffix = harmonize(original, suffix)  # "Bulut'nin" -> "Bulut'un"
+            return f"{original}{m.group('apostrophe')}{suffix}"
 
         return _TOKEN_IN_TEXT.sub(restore, text)
 
