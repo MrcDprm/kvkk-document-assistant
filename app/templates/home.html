@@ -1,5 +1,28 @@
 {% extends "base.html" %}
 
+{% block title %}{{ t('seo.title') }}{% endblock %}
+
+{% block seo %}
+  {% set site = 'https://kvkk.miracdeprem.com' %}
+  {% set url = site ~ '/' ~ ('?lang=en' if lang == 'en' else '') %}
+  <link rel="canonical" href="{{ url }}">
+  <link rel="alternate" hreflang="tr" href="{{ site }}/">
+  <link rel="alternate" hreflang="en" href="{{ site }}/?lang=en">
+  <link rel="alternate" hreflang="x-default" href="{{ site }}/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="{{ t('app.name') }}">
+  <meta property="og:title" content="{{ t('seo.title') }}">
+  <meta property="og:description" content="{{ t('meta.description') }}">
+  <meta property="og:url" content="{{ url }}">
+  <meta property="og:image" content="{{ site }}/static/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:locale" content="{{ 'en_US' if lang == 'en' else 'tr_TR' }}">
+  <meta property="og:locale:alternate" content="{{ 'tr_TR' if lang == 'en' else 'en_US' }}">
+  <meta name="twitter:card" content="summary_large_image">
+  <script type="application/ld+json">{{ json_ld | safe }}</script>
+{% endblock %}
+
 {% block content %}
 {% set mode = mode or 'file' %}
 <section class="hero container">
