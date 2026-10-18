@@ -1,10 +1,11 @@
 """Pages and JSON endpoints for uploading a document and reviewing the masking."""
 
+import json
 import secrets
 from pathlib import Path
 
 from fastapi import APIRouter, Request
-from fastapi.responses import JSONResponse, RedirectResponse, Response
+from fastapi.responses import JSONResponse, PlainTextResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from starlette.concurrency import run_in_threadpool
 from starlette.datastructures import UploadFile
@@ -18,6 +19,7 @@ from kvkk_mask import detect
 from kvkk_mask.fakegen import TEMPLATES, make_document
 
 SESSION_COOKIE = "kvkk_session"
+SITE_URL = "https://kvkk.miracdeprem.com"
 
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 router = APIRouter()
@@ -58,7 +60,62 @@ def current_session(request: Request) -> Session | None:
 def home(request: Request, error: str = "") -> Response:
     # Only known error codes are shown; anything else in the URL is ignored.
     known = f"error.{error}" in TEXTS["tr"]
-    return render(request, "home.html", error=error if known else "")
+    return render(request, "home.html", error=error if known else "", json_ld=home_json_ld(get_lang(request)))
+
+
+def home_json_ld(lang: str) -> str:
+    t = translator(lang)
+    data = {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": t("app.name"),
+        "url": SITE_URL + "/" + ("?lang=en" if lang == "en" else ""),
+        "description": t("meta.description"),
+        "inLanguage": lang,
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web",
+        "isAccessibleForFree": True,
+        "offers": {"@type": "Offer", "price": "0", "priceCurrency": "TRY"},
+        "author": {"@type": "Person", "name": "Miraç Deprem", "url": "https://www.miracdeprem.com"},
+        "codeRepository": "https://github.com/MrcDprm/kvkk-document-assistant",
+    }
+    # "<" escaped so the JSON can never close its script tag
+    return json.dumps(data, ensure_ascii=False).replace("<", "\\u003c")
+
+
+# --- Search engines ---
+
+ROBOTS = f"""User-agent: *
+Allow: /
+Disallow: /document
+Disallow: /api/
+Disallow: /lang/
+
+Sitemap: {SITE_URL}/sitemap.xml
+"""
+
+SITEMAP = f"""<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+""" + "".join(
+    f"""  <url>
+    <loc>{loc}</loc>
+    <xhtml:link rel="alternate" hreflang="tr" href="{SITE_URL}/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="{SITE_URL}/?lang=en"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="{SITE_URL}/"/>
+  </url>
+"""
+    for loc in (f"{SITE_URL}/", f"{SITE_URL}/?lang=en")
+) + "</urlset>\n"
+
+
+@router.api_route("/robots.txt", methods=["GET", "HEAD"])
+def robots() -> Response:
+    return PlainTextResponse(ROBOTS)
+
+
+@router.api_route("/sitemap.xml", methods=["GET", "HEAD"])
+def sitemap() -> Response:
+    return Response(SITEMAP, media_type="application/xml")
 
 
 @router.post("/analyze")

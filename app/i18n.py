@@ -9,7 +9,8 @@ TEXTS: dict[str, dict[str, str]] = {
     "tr": {
         "app.name": "KVKK Belge Asistanı",
         "app.short": "KVKK Asistanı",
-        "meta.description": "Türkçe kişisel verileri bulup maskeleyen, belgeye yapay zekâ ile kişisel veri göndermeden soru sorduran araç.",
+        "meta.description": "Belgelerdeki ad soyad, T.C. kimlik no, IBAN, telefon ve e-posta gibi Türkçe kişisel verileri bulup maskeler; yapay zekâya kişisel veri göndermeden belgeye soru sorarsın. Ücretsiz demo.",
+        "seo.title": "KVKK Belge Asistanı: kişisel veriyi maskele, belgeye soru sor",
         "nav.lang": "Dil",
         "nav.theme": "Temayı değiştir",
         "home.eyebrow": "KVKK · Kişisel veri maskeleme",
@@ -121,7 +122,8 @@ TEXTS: dict[str, dict[str, str]] = {
     "en": {
         "app.name": "KVKK Document Assistant",
         "app.short": "KVKK Assistant",
-        "meta.description": "Finds and masks Turkish personal data so you can ask an AI about a document without sending that data.",
+        "meta.description": "Finds and masks Turkish personal data in documents, such as names, Turkish ID numbers, IBANs, phone numbers and e-mails, so you can ask an AI about a document without sending that data. Free demo.",
+        "seo.title": "KVKK Document Assistant: mask personal data, ask your documents",
         "nav.lang": "Language",
         "nav.theme": "Toggle theme",
         "home.eyebrow": "KVKK · Personal data masking",
@@ -237,6 +239,10 @@ JS_KEYS = [k for k in TEXTS["tr"] if k.startswith(("type.", "doc.", "ask.", "aud
 
 
 def get_lang(request: Request) -> str:
+    # ?lang=en gives search engines an English address; then the cookie, then the browser.
+    lang = request.query_params.get("lang")
+    if lang in LANGS:
+        return lang
     lang = request.cookies.get(LANG_COOKIE)
     if lang in LANGS:
         return lang

@@ -389,3 +389,42 @@ def test_cloudflare_client_ip_is_used(client):
 def test_session_cookie_has_no_fixed_lifetime(client):
     cookie = analyze_text(client).headers["set-cookie"].lower()
     assert "max-age" not in cookie and "expires" not in cookie
+
+
+# --- Search engines ---
+
+def test_lang_query_selects_english_before_cookie(client):
+    client.cookies.set("lang", "tr")
+    response = client.get("/?lang=en")
+    assert '<html lang="en">' in response.text
+    assert '<link rel="canonical" href="https://kvkk.miracdeprem.com/?lang=en">' in response.text
+
+
+def test_home_has_seo_tags_and_valid_json_ld(client):
+    import json
+    import re
+
+    html = client.get("/").text
+    assert '<link rel="canonical" href="https://kvkk.miracdeprem.com/">' in html
+    assert 'hreflang="en" href="https://kvkk.miracdeprem.com/?lang=en"' in html
+    assert 'property="og:image"' in html
+    assert 'name="robots"' not in html
+    data = json.loads(re.search(r'<script type="application/ld\+json">(.*?)</script>', html, re.S).group(1))
+    assert data["@type"] == "WebApplication"
+
+
+def test_private_pages_are_noindex(client):
+    assert '<meta name="robots" content="noindex">' in client.get("/no-such-page").text
+    analyze_text(client)
+    assert '<meta name="robots" content="noindex">' in client.get("/document").text
+
+
+def test_robots_and_sitemap(client):
+    robots = client.get("/robots.txt")
+    assert robots.status_code == 200
+    assert "Disallow: /document" in robots.text
+    assert "Sitemap: https://kvkk.miracdeprem.com/sitemap.xml" in robots.text
+    sitemap = client.get("/sitemap.xml")
+    assert sitemap.headers["content-type"].startswith("application/xml")
+    assert sitemap.text.count("<loc>") == 2
+    assert client.head("/sitemap.xml").status_code == 200
