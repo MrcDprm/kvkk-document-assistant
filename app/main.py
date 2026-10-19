@@ -24,10 +24,12 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s:     %(name)s: %(m
 logger = logging.getLogger("kvkk")
 
 SECURITY_HEADERS = {
-    # Only our own files may run or load; no inline scripts, no framing.
+    # Only our own files (plus the Nabız visitor counter) may run or load;
+    # no inline scripts, no framing.
     "Content-Security-Policy": (
-        "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; "
-        "font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; "
+        "default-src 'self'; script-src 'self' https://nabiz.miracdeprem.com; style-src 'self'; "
+        "img-src 'self' data:; font-src 'self'; connect-src 'self' https://nabiz.miracdeprem.com; "
+        "object-src 'none'; base-uri 'none'; "
         "form-action 'self'; frame-ancestors 'none'"
     ),
     "X-Content-Type-Options": "nosniff",
