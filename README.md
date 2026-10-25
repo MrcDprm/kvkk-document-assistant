@@ -172,13 +172,6 @@ tests/            pytest suites
 - **Turkish text has its own traps.** Python's `lower()` turns "I" into "i" instead of "ı", `capitalize()` gives "Irem" instead of "İrem", PDFs can store "ş" as two characters, and suffixes follow vowel harmony. Each of these caused a real bug.
 - **Free tiers are not a production plan.** Gemini 2.5 Flash allows 20 requests a day; another model took 10–35 seconds or returned "busy". I put the providers behind one interface and built a fallback chain, so the demo keeps answering.
 
-## Future Plans
-
-- Address detection (street, district, city) with the model
-- OCR for scanned PDFs
-- A self-hosted model option (e.g. Ollama) so that even masked text stays inside the company
-- Batch masking API for documents without the web interface
-
 ## Credits
 
 - Base model: [ytu-ce-cosmos/turkish-mini-bert-uncased](https://huggingface.co/ytu-ce-cosmos/turkish-mini-bert-uncased) (Kesgin et al., 2023)
