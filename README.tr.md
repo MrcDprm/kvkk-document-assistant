@@ -172,13 +172,6 @@ tests/            pytest testleri
 - **Türkçe metnin kendi tuzakları var.** Python'un `lower()` fonksiyonu "I" harfini "ı" yerine "i" yapıyor, `capitalize()` "İrem" yerine "Irem" veriyor, PDF'ler "ş" harfini iki karakter olarak saklayabiliyor ve ekler ünlü uyumuna uyuyor. Her biri gerçek bir hataya yol açtı.
 - **Ücretsiz katman bir üretim planı değildir.** Gemini 2.5 Flash günde 20 isteğe izin veriyor; başka bir model 10-35 saniye sürdü ya da "yoğun" cevabı verdi. Sağlayıcıları tek bir arayüzün arkasına koyup yedekli bir zincir kurdum; demo cevap vermeye devam ediyor.
 
-## Gelecek Planları
-
-- Modelle adres tanıma (sokak, ilçe, il)
-- Taranmış PDF'ler için OCR
-- Maskeli metin bile şirket dışına çıkmasın diye kendi sunucusunda çalışan model seçeneği (ör. Ollama)
-- Web arayüzü olmadan toplu maskeleme API'si
-
 ## Teşekkür
 
 - Taban model: [ytu-ce-cosmos/turkish-mini-bert-uncased](https://huggingface.co/ytu-ce-cosmos/turkish-mini-bert-uncased) (Kesgin vd., 2023)
