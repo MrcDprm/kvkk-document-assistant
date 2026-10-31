@@ -1,4 +1,5 @@
 import io
+import tempfile
 
 import pytest
 from docx import Document
@@ -137,6 +138,27 @@ def test_oversized_body_is_rejected_before_parsing():
     )
     assert response.status_code == 303
     assert response.headers["location"] == "/?error=too_large"
+
+
+@pytest.mark.parametrize("size", [2 * 1024 * 1024, 10 * 1024 * 1024])
+def test_uploads_never_touch_the_disk(monkeypatch, size):
+    # An upload that outgrows its in-memory buffer moves to tempfile.TemporaryFile.
+    client = TestClient(create_app(make_settings(max_upload_bytes=10 * 1024 * 1024)))
+    created = []
+    real_temporary_file = tempfile.TemporaryFile
+
+    def recording_temporary_file(*args, **kwargs):
+        created.append(1)
+        return real_temporary_file(*args, **kwargs)
+
+    monkeypatch.setattr(tempfile, "TemporaryFile", recording_temporary_file)
+    client.post(
+        "/analyze",
+        data={"mode": "file"},
+        files={"file": ("big.txt", b"a" * size, "text/plain")},
+        follow_redirects=False,
+    )
+    assert created == []
 
 
 def test_new_upload_replaces_previous_session(client):
