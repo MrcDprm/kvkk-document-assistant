@@ -47,15 +47,7 @@
   <footer class="site-footer">
     <div class="container site-footer__inner">
       <p class="site-footer__note">{{ t('footer.note') }}</p>
-      {# Every live project links to the others; the current one is highlighted. #}
-      <nav class="footer-projects" aria-label="{{ t('footer.projects') }}">
-        <a href="https://www.miracdeprem.com/projects">{{ t('footer.other_projects') }}</a>
-      </nav>
-      <div class="footer-meta">
-        <span>© 2026 Miraç Deprem</span>
-        <a href="https://www.miracdeprem.com">{{ t('footer.portfolio') }}</a>
-        <a href="https://github.com/MrcDprm/kvkk-document-assistant">{{ t('footer.source') }}</a>
-      </div>
+      <p class="footer-meta">© {{ current_year() }} Miraç Deprem</p>
     </div>
   </footer>
 </body>

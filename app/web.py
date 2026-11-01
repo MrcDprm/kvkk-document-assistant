@@ -1,5 +1,6 @@
 """Pages and JSON endpoints for uploading a document and reviewing the masking."""
 
+from datetime import UTC, datetime
 import json
 import secrets
 from pathlib import Path
@@ -22,6 +23,8 @@ SESSION_COOKIE = "kvkk_session"
 SITE_URL = "https://kvkk.miracdeprem.com"
 
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
+# Alt bilgideki yıl sabit yazılmaz
+templates.env.globals["current_year"] = lambda: datetime.now(UTC).year
 router = APIRouter()
 
 
