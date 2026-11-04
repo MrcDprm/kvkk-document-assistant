@@ -3,6 +3,8 @@
 Two data sets:
 - synthetic: demo documents from kvkk_mask.fakegen (labels come from the generator),
 - hard cases: hand-written sentences in eval/hard_cases.txt.
+- form labels: official documents whose field labels ("Baba Adı", "Sona Erme Tarihi") sit next
+  to names, in eval/form_cases.txt (tuning) and eval/form_cases_2.txt (held out).
 
 A detection counts as correct only when type, start and end all match the label.
 "Leak" counts labeled values that still have at least one visible character after masking.
@@ -152,6 +154,8 @@ def report() -> str:
         (f"Synthetic documents ({SYNTHETIC_COUNT})", synthetic_cases()),
         ("Hard cases (tuning set)", load_hard_cases()),
         ("Hard cases 2 (held out)", load_hard_cases("hard_cases_2.txt")),
+        ("Form labels (tuning set)", load_hard_cases("form_cases.txt")),
+        ("Form labels 2 (held out)", load_hard_cases("form_cases_2.txt")),
     ]
     modes = detectors()
     scores = {(d, m): evaluate(cases, fn) for d, cases in datasets for m, fn in modes.items()}

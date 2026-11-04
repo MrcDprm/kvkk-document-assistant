@@ -1,0 +1,42 @@
+# Form labels 2 (held out).
+# Written before the form-label fix and never used for tuning it: other official documents
+# (residence, health report, court, family registry) with the same kind of field labels.
+# Same format: [[TYPE:value]], blank line between cases.
+
+YERLEŞİM YERİ BELGESİ
+Adı Soyadı: [[KISI:Melike Aksoy]]
+Baba Adı: [[KISI:Recep]]
+Ana Adı: [[KISI:Gülizar]]
+Adres: Atatürk Mah. Çınar Sok. No: 7 Çankaya/Ankara
+
+Hasta Adı Soyadı [[KISI:Burak Tunç]] Baba Adı [[KISI:Yaşar]] Anne Adı [[KISI:Nermin]] Rapor Türü Sürücü
+
+Raporun geçerliliği 01.09.2027 tarihinde sona erecektir.
+
+Sözleşme Sona Erme Tarihi: 15.04.2028
+Sözleşme Sahibi: [[KISI:Ece Duran]]
+
+Davacı: [[KISI:Selin Arıkan]]
+Baba Adı: [[KISI:Hüseyin]]
+Davalı: [[KISI:Okan Arıkan]]
+
+AİLE NÜFUS KAYIT ÖRNEĞİ
+Yakınlık: Kendisi
+Adı: [[KISI:Sona]]
+Soyadı: [[KISI:Erdem]]
+Babası: [[KISI:Ferit]]
+Annesi: [[KISI:Lale]]
+
+Görev süresi sona eren [[KISI:Sona Erdem]] yerine [[KISI:Kaan Bilir]] atandı.
+
+Baba Adı
+[[KISI:Ferit]]
+Ana Adı
+[[KISI:Lale]]
+Doğum Tarihi
+04.11.2001
+
+Pasaport Sona Erme Tarihi
+22.08.2030
+
+Üyeliği sona erdi: [[KISI:Deniz Kaplan]]

@@ -1,0 +1,63 @@
+# Form labels (tuning set).
+# Official documents (military status, civil registry, student certificate) where field labels
+# such as "Baba Adı", "Ana Adı" or the phrase "Sona Erme Tarihi" sit next to real names.
+# Found in a real military status document: "Baba" and "sona" were masked as people.
+# Same format as hard_cases.txt: [[TYPE:value]], blank line between cases.
+# "Sona" is also a given name, so some cases use it as one.
+
+T.C.
+MİLLÎ SAVUNMA BAKANLIĞI
+ASKERLİK DURUM BELGESİ
+T.C. Kimlik No: [[TCKN:10000000146]]
+Adı: [[KISI:Kerem]]
+Soyadı: [[KISI:Yalçınkaya]]
+Baba Adı: [[KISI:Osman]]
+Ana Adı: [[KISI:Hatice]]
+Doğum Yeri: Konya
+Doğum Tarihi: 12.03.1999
+
+Adı Soyadı [[KISI:Kerem Yalçınkaya]] Baba Adı [[KISI:Osman]] Ana Adı [[KISI:Hatice]]
+
+Adı
+[[KISI:Kerem]]
+Soyadı
+[[KISI:Yalçınkaya]]
+Baba Adı
+[[KISI:Osman]]
+Ana Adı
+[[KISI:Hatice]]
+
+Askerlik Durumu: Tecillidir.
+Tecil Türü: Yüksek Öğrenim
+Sona Erme Tarihi: 31.12.2027
+
+[[KISI:Kerem YALÇINKAYA]]
+Sona Erme Tarihi
+31.12.2027
+
+Tecil Bitiş / Sona Erme: 31.12.2027
+
+Askerlik hizmeti 12.05.2022 tarihinde sona ermiştir.
+
+Yükümlünün ertelemesi Sona Erdi olarak güncellenmiştir.
+
+NÜFUS KAYIT ÖRNEĞİ
+Adı: [[KISI:Sona]]
+Soyadı: [[KISI:Gürbüz]]
+Baba Adı: [[KISI:Necati]]
+Anne Adı: [[KISI:Sevim]]
+Medeni Hali: Bekâr
+
+Öğrenci [[KISI:Sona Gürbüz]] Bilgisayar Mühendisliği bölümüne kayıtlıdır.
+
+ÖĞRENCİ BELGESİ
+Adı Soyadı: [[KISI:Tolga Ceylan]]
+Baba Adı: [[KISI:İlhan]]
+Öğrenim Durumu: Kayıtlı
+Kayıt Sona Erme Tarihi: 30.06.2028
+
+BABA ADI: [[KISI:OSMAN]]
+ANA ADI: [[KISI:HATİCE]]
+SONA ERME TARİHİ: 31.12.2027
+
+baba adı [[KISI:osman]] ana adı [[KISI:hatice]]
