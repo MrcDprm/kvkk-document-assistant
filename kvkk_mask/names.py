@@ -2,7 +2,8 @@
 
 A Turkish NER model would not fit in the 512 MB free server, so names are found with rules:
 - a known first name followed by more capitalized words ("Ayşe Yılmaz", "Ali Rıza KAYA"),
-- any capitalized words after a title or label ("Av. Zümrüt Karaosmanoğlu", "Adı Soyadı: ..."),
+- any capitalized words after a title or label ("Av. Zümrüt Karaosmanoğlu", "Adı Soyadı: ...",
+  "Baba Adı: ..."),
 - a single known first name before "Bey" / "Hanım" ("Emre Bey").
 """
 
@@ -20,7 +21,10 @@ _TOKEN = re.compile(r"(?<![\w])[A-ZÇĞİÖŞÜ](?:[a-zçğıöşüâîû]+|[A-Z
 _NAME_GAP = re.compile(r"[ \t]{1,3}")
 _TITLE_BEFORE = re.compile(
     r"(?:\b(?:Sayın|SAYIN|Bay|Bayan)|\b(?:Sn|Av|Dr|Prof|Doç|Uzm|Öğr\.\s?Gör)\.)\s+$"
-    r"|(?:Ad[ıi]?\s*(?:ve\s+)?Soyad[ıi]?|İsim|Name)\s*:\s*$",
+    r"|(?:Ad[ıi]?\s*(?:ve\s+)?Soyad[ıi]?|İsim|Name)\s*:\s*$"
+    # Form fields: "Baba Adı: Osman", and "Adı:" / "Soyadı:" only at the start of a line,
+    # so "Ürün Adı: Kahve Makinesi" is not taken as a person.
+    r"|(?:\b(?:Baba|Ana|Anne)\s+Ad[ıi]|(?:^|\n)[ \t]*(?:Ad[ıi]|Soyad[ıi]))\s*:[ \t]*$",
     re.IGNORECASE,
 )
 _HONORIFICS = {"bey", "hanım", "beyefendi", "hanımefendi"}

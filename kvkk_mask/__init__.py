@@ -3,6 +3,7 @@
 from typing import TYPE_CHECKING
 
 from kvkk_mask.known import find_known
+from kvkk_mask.labels import strip_labels
 from kvkk_mask.names import find_names
 from kvkk_mask.recognizers import Entity, EntityType, find_entities
 
@@ -22,6 +23,7 @@ def detect(text: str, known: list[Entity] | None = None, ner: "NerModel | None" 
     `ner`: the trained model. It decides on names; the rules only add names backed by context
     (a title or label before them, Bey/Hanım after them), unless the model marks the same words
     as an organisation or place. Dictionary-only rule matches ("Umut Verici") are left out.
+    Form field labels are cut out of names ("Osman Ana" -> "Osman", "Sona Erme" -> nothing).
     """
     if ner is None:
         names = find_names(text)
@@ -31,6 +33,8 @@ def detect(text: str, known: list[Entity] | None = None, ner: "NerModel | None" 
         not_people = [s for s in spans if s.label != "PER"]
         names = [n for n in find_names(text, strong_only=True) if not any(_overlaps(n, s) for s in not_people)]
         names += people
+    # Form labels ("Baba Adı", "Sona Erme Tarihi") are not names, nor part of the name next to them.
+    names = strip_labels(text, names)
     if not known:
         return find_entities(text, extra=names)
     found = find_known(text, known)
